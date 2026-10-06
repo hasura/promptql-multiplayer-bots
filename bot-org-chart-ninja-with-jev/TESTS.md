@@ -88,3 +88,10 @@ These are review/launch scenarios, not a claim that the research bot has already
 - Jev not provisioned: no managed-provider Connect card; research-only mode requires user choice.
 - Public package and demos contain no private roster, email, company/customer evidence, source-bot identifiers or hidden real-to-fake mapping.
 - Before minting a seed: publish and verify anonymous raw-file access, composer paragraph formatting and post-format 16 KiB limit.
+
+## Multiplayer correction pass
+
+- After handover, the bot asks once whether someone who knows the company should check the chart.
+- The bot tags only the people the user names.
+- Corrections are recorded with who gave them and when, the affected Jev decisions are rerun, and corrected lines are labelled `Corrected by <name>`.
+- Solo users can skip this step, and the bot does not ask again.
