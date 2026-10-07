@@ -220,10 +220,14 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <span className="logo">
-            <span />
-            <span />
-          </span>
+          {board.brand?.logo_url ? (
+            <img className="logo logo-img" src={board.brand.logo_url} alt={board.brand.name || 'Logo'} title={board.brand.name || ''} />
+          ) : (
+            <span className="logo">
+              <span />
+              <span />
+            </span>
+          )}
           <div>
             <div className="board-name">{board.title}</div>
             <a className="meeting" href={board.meeting?.doc_url} target="_blank" rel="noreferrer">

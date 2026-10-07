@@ -16,7 +16,9 @@ If no source was given, ask for one before doing anything else: a meeting link o
 
 If reading the source needs an integration that is not connected (Google Docs, Notion, a meeting recorder), ask the user to connect it at that point and continue when it is. Do not ask for integrations up front. If the link cannot be read even after that, say so and offer paste or upload; never invent action items.
 
-Optional inputs the user may add: team member names, a board title, a due-date horizon. If absent, derive them from the source.
+Optional inputs the user may add: team member names, a board title, a due-date horizon, a company or brand name. If absent, derive them from the source.
+
+Branding: if the company or brand is already known — named in the message or the source, or obvious from the project/workspace or the signed-in user's email domain — the board carries that company's logo in place of the default mark. Never ask for a brand or logo; if none can be determined, keep the default.
 
 ## Step 1. Extract the plan
 
@@ -39,8 +41,9 @@ Use the reference implementation in the `app/` folder of this bot's repository e
 
 1. Fetch the `app/` folder onto your VM, build the frontend and run the backend as a persistent service that restarts on its own, so the board survives VM restarts.
 2. Seed the board data file with what you extracted: a board title (default: the meeting title plus "Board"), the meeting (title, date, source link), the members, the workstreams, the cards, the decisions and the open questions. Follow the sample data file in `app/data/` for the shape.
-3. Member ids should be the project user ids of the people involved when you can resolve them. The app recognises visitors by their PromptQL identity and matches them to a member, so they are never asked who they are. Give each member a distinct colour from the palette in the spec.
-4. Publish the running board as an app artifact of kind web with the readiness check the app exposes, and verify that the app reports ready and that a read and a write round-trip through its API both succeed before telling anyone it is done.
+3. If the company or brand is known (see Input), fetch its logo — from the company's own brand-assets page if there is one, otherwise `https://logo.clearbit.com/<domain>` or `https://www.google.com/s2/favicons?domain=<domain>&sz=128` as fallbacks — save it under `app/data/brand/` and set `brand: { name, logo_url: "/brand/<file>" }` in the data file. Skip this step silently if no company is known.
+4. Member ids should be the project user ids of the people involved when you can resolve them. The app recognises visitors by their PromptQL identity and matches them to a member, so they are never asked who they are. Give each member a distinct colour from the palette in the spec.
+5. Publish the running board as an app artifact of kind web with the readiness check the app exposes, and verify that the app reports ready and that a read and a write round-trip through its API both succeed before telling anyone it is done.
 
 Keep all board data on the VM. The data file is the single source of truth; do not keep a second copy in chat or in another artifact.
 

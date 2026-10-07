@@ -357,6 +357,12 @@ async def post_ops(request: Request):
 if DIST.exists():
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
 
+# Company/brand logo files live in data/brand/ and are served at /brand/<file>;
+# board.json's `brand.logo_url` points at one of them (or at any external URL).
+BRAND_DIR = ROOT / "data" / "brand"
+if BRAND_DIR.is_dir():
+    app.mount("/brand", StaticFiles(directory=BRAND_DIR), name="brand")
+
 
 @app.get("/{path:path}")
 def spa(path: str):
