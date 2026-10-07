@@ -142,7 +142,10 @@ export default function App() {
 
   const onAdd = (status: string, title: string) => {
     const ws = wsFilter || 'General'
-    runOps([{ op: 'add', card: { title, status, workstream: ws, priority: prFilter || 'p1', assignees: memberFilter } }], (b) => ({
+    // a card you add is yours unless you are filtering by other members
+    const owners = memberFilter.length ? memberFilter : actorMember ? [actorMember.id] : []
+    const createdBy = actorMember?.id
+    runOps([{ op: 'add', card: { title, status, workstream: ws, priority: prFilter || 'p1', assignees: owners, created_by: createdBy } }], (b) => ({
       ...b,
       cards: [
         ...b.cards,
@@ -153,11 +156,12 @@ export default function App() {
           status,
           priority: (prFilter || 'p1') as Priority,
           workstream: ws,
-          assignees: memberFilter,
+          assignees: owners,
           due: '',
           order: b.cards.filter((c) => c.status === status).length,
           comments: [],
           source: '',
+          created_by: createdBy,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },

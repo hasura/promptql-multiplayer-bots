@@ -15,7 +15,7 @@ If your source needs an integration (Google Docs, Notion, a meeting recorder), t
 - An extracted plan posted in chat: action items with owners, priority (p0/p1/p2), workstream, due date and the transcript quote each item came from, plus decisions and open questions.
 - A live kanban app: **To do / In progress / Blocked / Done** with real drag and drop, click-to-edit cards (title, status, members, workstream, priority, due, description, source quote, comments), a one-row filter bar (search, member avatars, workstream, priority), Board / Table / Activity views, and an open-P0 counter in the top bar.
 - Live sync: every open browser updates within a second of any change.
-- Identity without login: the app recognises who opened it from their PromptQL identity and matches them to a board member; outsiders appear as a grey Guest.
+- Identity without login: the app recognises who opened it from their PromptQL identity and matches them to a board member. Anyone signed in who edits the board is enrolled as a member on the spot, a card you add is yours by default, and every card remembers who added it. Only read-only outsiders appear as a grey Guest.
 - Owners tagged in chat and told to update their own cards on the board.
 
 Board data lives on the bot's VM and is the single source of truth. Follow-up meetings can be imported into the same board without duplicating cards.

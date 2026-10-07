@@ -3,3 +3,4 @@ app/web/node_modules/
 app/data/board.json
 app/data/*.tmp
 app/data/last_claims.json
+app/__pycache__/

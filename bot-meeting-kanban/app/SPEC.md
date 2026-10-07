@@ -18,7 +18,7 @@ members          [{ id, name, short, initials, color, email? }]
 workstreams      [string]
 cards            [{ id "cNN", title, description, status, priority p0|p1|p2, workstream,
                     assignees [member id], due (YYYY-MM-DD or ""), order, comments [{id, author, text, at}],
-                    source (quote from the meeting), created_at, updated_at }]
+                    source (quote from the meeting), created_by (member id or ""), created_at, updated_at }]
 activity         [{ at, actor, text, card_id }]   (last 500 kept)
 decisions        [string]
 open_questions   [string]
@@ -35,7 +35,11 @@ Member `id` should be the PromptQL project user id when known, so visitors are r
 - `GET /api/events?since=<rev>` → long-poll (25 s) that returns the snapshot when `rev` advances.
 - `GET /api/whoami` → `{ me }`.
 
-Visitor identity is read from the `X-PromptQL-Visitor-Token` header (a JWT whose claims carry user id, email and name). The server matches it to a member by id or email; unmatched visitors are `{ member: false }` and shown as a grey Guest. If no token is present at all, the UI falls back to an "acting as" picker.
+Visitor identity is read from the `X-PromptQL-Visitor-Token` header (a JWT whose claims carry user id, email and name). The server matches it to a member by id or email; unmatched visitors are `{ member: false }` and shown as a grey Guest while they only read. If no token is present at all, the UI falls back to an "acting as" picker.
+
+The first time a signed-in visitor writes to the board (`POST /api/ops`) they are enrolled as a member automatically: the server appends `{ id, name, short, initials, color, email }` to `members` using the next free colour from the palette and logs "joined the board". Nobody has to be pre-seeded to show up with their own name.
+
+A card added without explicit `assignees` is owned by the person who added it, and `created_by` records them; the card modal shows "Added by". The UI's quick composer sends the current member filter as owners when one is active, otherwise the visitor.
 
 ## Look and feel
 

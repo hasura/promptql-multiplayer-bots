@@ -1,4 +1,4 @@
-export type Member = { id: string; name: string; short: string; initials: string; color: string }
+export type Member = { id: string; name: string; short: string; initials: string; color: string; email?: string }
 export type Column = { id: string; title: string }
 export type Comment = { id: string; author: string; text: string; at: string }
 export type Priority = 'p0' | 'p1' | 'p2'
@@ -14,6 +14,7 @@ export type Card = {
   order: number
   comments: Comment[]
   source: string
+  created_by?: string
   created_at: string
   updated_at: string
 }

@@ -112,7 +112,26 @@ def resolve_me(request: Request, board: dict):
             return {**m, "member": True}
     name = v["name"] or "Guest"
     initials = "".join(p[0] for p in name.split()[:2]).upper() or "?"
-    return {"id": v["id"] or v["email"], "name": name, "short": name.split()[0], "initials": initials, "color": "#6B7280", "member": False}
+    return {"id": v["id"] or v["email"], "email": v["email"], "name": name, "short": name.split()[0], "initials": initials, "color": "#6B7280", "member": False}
+
+
+MEMBER_PALETTE = ["#2563EB", "#7C3AED", "#059669", "#D97706", "#DC2626", "#0891B2", "#BE185D"]
+
+
+def enrol_member(board, me):
+    """A signed-in visitor who writes to the board becomes a member on the spot,
+    so their name and avatar can show on cards, comments and the activity log
+    even if they were not in the seeded member list."""
+    if not me or me.get("member") or not me.get("id") or me["name"] == "Guest":
+        return me
+    used = {m["color"] for m in board["members"]}
+    color = next((c for c in MEMBER_PALETTE if c not in used), MEMBER_PALETTE[len(board["members"]) % len(MEMBER_PALETTE)])
+    member = {"id": me["id"], "name": me["name"], "short": me["short"], "initials": me["initials"], "color": color}
+    if me.get("email"):
+        member["email"] = me["email"]
+    board["members"].append(member)
+    log(board, me["short"], "joined the board")
+    return {**member, "member": True}
 
 
 def actor_name(me, payload_actor, board):
@@ -182,15 +201,22 @@ def new_card(board, f):
         "order": len(col_cards(board, status)),
         "comments": [],
         "source": str(f.get("source", "")),
+        "created_by": str(f.get("created_by") or ""),
         "created_at": ts,
         "updated_at": ts,
     }
 
 
-def apply_op(board, op, actor):
+def apply_op(board, op, actor, me=None):
     kind = op.get("op")
     if kind == "add":
-        card = new_card(board, op.get("card") or op)
+        fields = dict(op.get("card") or op)
+        if me and me.get("member"):
+            # a card added by a signed-in member belongs to them unless owners were given
+            fields.setdefault("created_by", me["id"])
+            if not fields.get("assignees"):
+                fields["assignees"] = [me["id"]]
+        card = new_card(board, fields)
         board["cards"].append(card)
         if "index" in op and op["index"] is not None:
             move_card(board, card, card["status"], int(op["index"]))
@@ -321,9 +347,9 @@ async def post_ops(request: Request):
         raise HTTPException(400, "ops is empty")
     with _lock:
         board = load()
-        me = resolve_me(request, board)
+        me = enrol_member(board, resolve_me(request, board))
         actor = actor_name(me, payload.get("actor"), board)
-        results = [apply_op(board, op, actor) for op in ops]
+        results = [apply_op(board, op, actor, me) for op in ops]
         persist(board)
         return {**snapshot(request, board), "applied": len(ops), "ids": results}
 

@@ -192,7 +192,7 @@ export default function CardModal({ card, board, actorName, onOps, onClose }: Pr
               </div>
               <div className="comments">
                 {[...(card.comments ?? [])].reverse().map((c) => {
-                  const m = board.members.find((x) => x.short === c.author || x.name === c.author)
+                  const m = board.members.find((x) => x.id === c.author || x.short === c.author || x.name === c.author)
                   return (
                     <div key={c.id} className="comment">
                       <Avatar m={m ?? { initials: c.author.slice(0, 2).toUpperCase(), color: '#6B7280', name: c.author }} size={28} />
@@ -235,6 +235,11 @@ export default function CardModal({ card, board, actorName, onOps, onClose }: Pr
               </button>
             )}
             <div className="meta-block">
+              {card.created_by && byId.get(card.created_by) && (
+                <div>
+                  Added by <b>{byId.get(card.created_by)!.name}</b>
+                </div>
+              )}
               <div>
                 Created <b>{fmtTime(card.created_at)}</b>
               </div>
