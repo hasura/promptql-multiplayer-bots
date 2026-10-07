@@ -1,0 +1,15 @@
+[Unit]
+Description=iPhone camera app artifact
+After=network.target
+
+[Service]
+Type=simple
+User=promptql
+WorkingDirectory=/workspace/camera-app
+Environment=PORT=8080
+ExecStart=/usr/bin/python3 /workspace/camera-app/server.py
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
