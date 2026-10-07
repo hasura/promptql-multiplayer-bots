@@ -1,6 +1,6 @@
 # Example Camera Photo Gallery
 
-Link to create new bot: **Pending publication**
+No launch link: point PromptQL to this repo to build the app.
 
 The bot runs a camera app with a shared photo gallery on its VM, published as an app artifact. Everyone in the bot opens the same app on their phone, takes photos, and sees each other's photos in one gallery.
 
