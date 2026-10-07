@@ -13,6 +13,7 @@ Each bot below has a link that opens a new bot with its prompt ready to send. Op
 | [Bot Org Chart Ninja with Jev](bot-org-chart-ninja-with-jev/) | Maps likely departments and reporting lines with Jev, public LinkedIn research and people summaries. | [Prompt](bot-org-chart-ninja-with-jev/PROMPT.md) (launch link pending) |
 | [Example Camera Photo Gallery](example-camera-photo-gallery/) | Runs a shared camera app on its VM: live viewfinder or your phone's camera, and one photo gallery for everyone in the bot. | [Prompt](example-camera-photo-gallery/PROMPT.md) (point PromptQL to this repo to build the app) |
 | [Bot Meeting Kanban](bot-meeting-kanban/) | Turns a meeting (notes, transcript or Notion page) into a Trello-style kanban board app on its VM that the whole team updates together. | [Prompt](bot-meeting-kanban/PROMPT.md) (launch link pending) |
+| [Bot last30days](bot-last30days/) | Tells you what people actually said about a topic in the last 30 days — X, web, Hacker News, GitHub, Polymarket, arXiv — ranked by real engagement, written up as a short honest brief. No keys to configure. | [Prompt](bot-last30days/PROMPT.md) (launch link pending) |
 
 ## What is in each bot directory
 
