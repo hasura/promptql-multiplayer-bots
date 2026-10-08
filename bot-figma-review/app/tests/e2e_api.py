@@ -196,6 +196,31 @@ def main():
         r = c.get(f"/api/files/{mp.FILE_KEY}/figma-plugin.zip?frames={home_fr2['id']}"); d = json.loads(r.content and _zf.ZipFile(_io.BytesIO(r.content)).read("code.js").decode().split("const DESIGN = ", 1)[1].split(";\n", 1)[0])
         check("10f imported frame keeps figma node id for placement", r.status_code == 200 and d["frames"][0]["kind"] == "figma" and d["frames"][0]["node_id"] == home_fr2["node_id"], r.status_code)
         r = c.get(f"/api/files/{mp.FILE_KEY}/figma-plugin.zip?frames={mob['id']}"); check("10g undrawn frame 400", r.status_code == 400 and "draw" in r.text.lower(), (r.status_code, r.headers.get("content-type")))
+        # 11. groups, auto layout, rotation, gradients, shadows survive the round trip; layer counts are recursive
+        rich = {"bg": "#ffffff", "els": [
+            {"id": "g1", "type": "group", "x": 10, "y": 10, "w": 220, "h": 60, "rot": 15, "opacity": 0.9, "layout": {"dir": "row", "gap": 8, "pad": 6},
+             "shadow": {"x": 0, "y": 4, "blur": 16, "color": "#000000", "op": 0.25},
+             "els": [
+                {"id": "r1", "type": "rect", "x": 16, "y": 16, "w": 100, "h": 48, "fill": "#d9d9d9", "stroke": "", "sw": 1, "r": 8, "rot": 0, "opacity": 1,
+                 "grad": {"angle": 90, "stops": [{"o": 0, "c": "#6a4af0"}, {"o": 1, "c": "#f5a3c7"}]}},
+                {"id": "g2", "type": "group", "x": 124, "y": 16, "w": 100, "h": 48, "rot": 0, "opacity": 1, "els": [
+                    {"id": "e1", "type": "ellipse", "x": 124, "y": 16, "w": 48, "h": 48, "fill": "#22c55e", "stroke": "#111111", "sw": 2, "rot": -30, "opacity": 1},
+                    {"id": "t1", "type": "text", "x": 176, "y": 20, "w": 48, "h": 26, "fill": "#111111", "fs": 18, "fw": 700, "align": "center", "text": "Go", "rot": 10, "opacity": 1,
+                     "shadow": {"x": 1, "y": 1, "blur": 2, "color": "#ff0000", "op": 0.5}}]}]},
+            {"id": "l1", "type": "line", "x": 10, "y": 100, "w": 200, "h": 0, "fill": "", "stroke": "#111111", "sw": 2, "opacity": 1}]}
+        r = c.put(f"/api/frames/{f2}/doc", json={"doc": rich, "base_version": 1}, headers=A); check("11a save grouped doc", r.status_code == 200 and r.json()["version"] == 2, r.text)
+        r = c.get(f"/api/frames/{f2}/doc"); check("11b nested doc round-trips intact", r.json()["doc"] == rich)
+        r = c.get(f"/api/files/{LK}/figma-plugin.zip"); check("11c plugin counts nested layers", r.status_code == 200 and r.headers["x-layers"] == "6", (r.status_code, r.headers.get("x-layers")))
+        d = json.loads(_zf.ZipFile(_io.BytesIO(r.content)).read("code.js").decode().split("const DESIGN = ", 1)[1].split(";\n", 1)[0])
+        check("11d group tree embedded for the plugin", d["frames"][0]["els"][0]["type"] == "group" and d["frames"][0]["els"][0]["els"][1]["els"][1]["shadow"]["color"] == "#ff0000")
+        bad = {"bg": "#fff", "els": [{"id": "x", "type": "group", "x": 0, "y": 0, "w": 1, "h": 1, "els": "nope"}]}
+        r = c.put(f"/api/frames/{f2}/doc", json={"doc": bad, "base_version": 2}, headers=A); check("11e group without els list -> 400", r.status_code == 400, r.text)
+        deep = {"id": "d0", "type": "rect", "x": 0, "y": 0, "w": 1, "h": 1}
+        for i in range(10):
+            deep = {"id": f"d{i + 1}", "type": "group", "x": 0, "y": 0, "w": 1, "h": 1, "els": [deep]}
+        r = c.put(f"/api/frames/{f2}/doc", json={"doc": {"bg": "#fff", "els": [deep]}, "base_version": 2}, headers=A); check("11f groups nested too deep -> 400", r.status_code == 400 and "deep" in r.text.lower(), r.text)
+        many = {"bg": "#fff", "els": [{"id": "big", "type": "group", "x": 0, "y": 0, "w": 1, "h": 1, "els": [{"id": f"m{i}", "type": "rect", "x": 0, "y": 0, "w": 1, "h": 1} for i in range(2000)]}]}
+        r = c.put(f"/api/frames/{f2}/doc", json={"doc": many, "base_version": 2}, headers=A); check("11g element cap counts group children", r.status_code == 400 and "Too many" in r.text, r.text[:120])
         r = c.delete(f"/api/files/{LK}", headers=P); check("9z3 local design delete 204", r.status_code == 204)
 
         # 8. delete file: importer only

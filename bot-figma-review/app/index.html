@@ -183,6 +183,17 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .lyr.on{border-color:var(--accent);background:var(--panel2)}
 .lyr .lt{font-size:12px;font-weight:600}
 .lyr .ln{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lyr.scoped{border-style:dashed;border-color:var(--accent)}
+.prop .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:center}
+.crow.fixed{grid-template-columns:28px 1fr}
+.algn{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:var(--sunk);border:1px solid var(--border);border-radius:6px;padding:2px}
+.algn button{background:none;border:0;color:var(--muted);padding:4px 0;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:background .2s,color .2s}
+.algn button:hover:not(:disabled){color:var(--text);background:var(--panel2)}
+.algn button:disabled{opacity:.3;cursor:default}
+.algn button:nth-child(7){margin-left:4px}
+.sect{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.sect label{margin:0}
+.segm button svg{display:block;margin:0 auto}
 .txted{font-family:inherit}
 /* popover / modal */
 #popover{position:fixed;width:340px;max-height:70vh;display:none;flex-direction:column;background:var(--panel);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.6);z-index:10;overflow:hidden}

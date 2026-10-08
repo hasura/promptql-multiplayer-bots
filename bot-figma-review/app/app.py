@@ -600,6 +600,23 @@ async def rename_frame(fid: str, req: Request):
     return out
 
 
+def _count_els(els, depth: int = 0) -> int:
+    """Number of layers in a design, including children of groups (groups nest up to 8 levels)."""
+    if depth > 8:
+        raise HTTPException(400, "Groups are nested too deeply")
+    n = 0
+    for e in els:
+        if not isinstance(e, dict):
+            continue
+        n += 1
+        if e.get("type") == "group":
+            kids = e.get("els")
+            if not isinstance(kids, list):
+                raise HTTPException(400, "A group's els must be a list")
+            n += _count_els(kids, depth + 1)
+    return n
+
+
 def _doc_payload(fr) -> dict:
     try:
         doc = json.loads(fr["doc"]) if fr["doc"] else dict(EMPTY_DOC)
@@ -635,7 +652,7 @@ async def put_doc(fid: str, req: Request):
     doc = data.get("doc")
     if not isinstance(doc, dict) or not isinstance(doc.get("els"), list):
         raise HTTPException(400, "doc must be {bg, els:[...]}")
-    if len(doc["els"]) > MAX_ELEMENTS:
+    if _count_els(doc["els"]) > MAX_ELEMENTS:
         raise HTTPException(400, f"Too many elements (max {MAX_ELEMENTS})")
     base = int(data.get("base_version") or 0)
     cur = fr["doc_version"] or 0
@@ -707,7 +724,7 @@ def build_figma_plugin(key: str, frame_ids: list[str] | None) -> tuple[bytes, st
         except Exception:
             doc = dict(EMPTY_DOC)
         els = [e for e in (doc.get("els") or []) if isinstance(e, dict) and e.get("type")]
-        total += len(els)
+        total += _count_els(els)
         kind = r.get("kind") or "figma"
         specs.append({
             "name": r.get("name") or "Frame",
@@ -734,7 +751,8 @@ def build_figma_plugin(key: str, frame_ids: list[str] | None) -> tuple[bytes, st
         "  2. Open the Figma file you want the design in.\n"
         "  3. Menu > Plugins > Development > Import plugin from manifest... and pick manifest.json.\n"
         "  4. Menu > Plugins > Development > " + name + "\n\n"
-        f"It builds {len(specs)} frame(s) with {total} layers (rectangles, ellipses, lines, text in Inter, images). "
+        f"It builds {len(specs)} frame(s) with {total} layers (rectangles, ellipses, lines, text in Inter, images, "
+        "groups and auto-layout frames, with rotation, gradients and drop shadows). "
         "If the design was drawn on top of a frame imported from this file, it lands right next to that frame; "
         "otherwise it lands in the middle of your view.\n\nOnly the layers drawn on the board are created. "
         "The plugin needs no network access and does nothing else.\n"

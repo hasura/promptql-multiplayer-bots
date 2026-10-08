@@ -2,7 +2,7 @@
 
 You are setting up **Figma Design Review**: a standalone app on this bot's VM where PMs and designers design and review together, with or without Figma. The home screen offers two ways in:
 
-1. **Start a design here** — a blank frame with a small vector editor (rectangles, ellipses, lines, text, images). When it's ready it is carried into any Figma file as native, editable layers (a generated Figma plugin, or SVG via the clipboard), and the board stays linked to that file so comment threads can be pushed there too.
+1. **Start a design here** — a blank frame with a vector editor (rectangles, ellipses, lines, text, images; multi-select, align/distribute, snapping, rotation, groups, simple auto layout, gradients, drop shadows). When it's ready it is carried into any Figma file as native, editable layers (a generated Figma plugin, or SVG via the clipboard), and the board stays linked to that file so comment threads can be pushed there too.
 2. **Pull from Figma** — paste a Figma link; the frames are rendered into the app, people can draw on top of them, drop numbered pins, reply in threads, resolve or reopen, and push any thread back into the Figma file as a native comment at the same spot.
 
 Nobody needs a Figma seat to comment or draw — only the person importing needs access to the file.
@@ -67,7 +67,7 @@ If a link was supplied as input, you cannot import it on their behalf — import
 ## Step 4 — Hand over
 
 Reply with the artifact (`<artifact type="html" identifier="figma-review" />` renders the app card), then in two or three lines:
-- two ways to start: **Start a design here** (blank frame, draw with `D`) or **Pull from Figma** (paste a link; the file must be shared with their Figma account);
+- two ways to start: **Start a design here** (blank frame, draw with `D`; `⇧`-click or drag a box to select several, `⌥A/D/W/S/H/V` align, `⌘G` group, `⇧A` auto layout, hold `⌘` to skip snapping) or **Pull from Figma** (paste a link; the file must be shared with their Figma account);
 - `C` to comment, `V` to browse, `D` to design; click a frame to pin; everyone sees the same board;
 - Push to Figma downloads a generated Figma plugin (`GET /api/files/{key}/figma-plugin.zip?frames=…`, built from `app/static/figma_plugin.js`) that recreates the ticked frames as native layers; Copy SVG remains as a fallback; local designs can also link the Figma file; Push all sends threads into Figma as comments; Export / Download .md / Save to PromptQL export the work.
 

@@ -1,6 +1,6 @@
 # Figma Design Review — reference app
 
-Single FastAPI service + one HTML file + `static/editor.js`. SQLite for state (threads, local designs, per-frame drawing docs), PNGs on disk for Figma renders.
+Single FastAPI service + one HTML file + `static/editor.js` (vector editor: rect/ellipse/line/text/image/group elements with `rot`, `grad`, `shadow` and group `layout`; see the header comment for the document schema) + `static/figma_plugin.js` (template for the generated push-to-Figma plugin). SQLite for state (threads, local designs, per-frame drawing docs), PNGs on disk for Figma renders.
 
 ## Architecture
 
@@ -69,7 +69,7 @@ Errors from Figma come back as `{error, code}` with `code` ∈ `not_found` (file
 
 ## Tests
 
-`cd tests && uv run -q e2e_api.py` starts a mock Platform/Figma on `127.0.0.1:8111` and a throwaway app on `:8101`, then runs 71 checks (identity, import paths and errors, pins/replies/resolve/delete permissions, push + mirroring, export, artifact save, local designs and drawing docs with conflict detection, link-figma and pushing comments from a local design, drawings surviving a re-import, and that only visitor tokens ever reach the platform). No credentials needed.
+`cd tests && uv run -q e2e_api.py` starts a mock Platform/Figma on `127.0.0.1:8111` and a throwaway app on `:8101`, then runs 85 checks (identity, import paths and errors, pins/replies/resolve/delete permissions, push + mirroring, export, artifact save, local designs and drawing docs with conflict detection, link-figma and pushing comments from a local design, drawings surviving a re-import, nested groups and recursive layer counts, and that only visitor tokens ever reach the platform). No credentials needed. `node tests/editor_dom.js` drives the editor in jsdom (`cd tests && npm i jsdom` once): drawing, snapping, marquee/multi-select, align/distribute, group/ungroup, rotation, gradient/shadow, auto layout, undo and SVG export. `sh tests/plugin_rich.sh` runs a generated plugin with groups/rotation/gradients/shadows through the Plugin-API stub.
 
 ## Quirks learned the hard way
 
