@@ -1,0 +1,14 @@
+[Unit]
+Description=Figma Design Review (standalone Figma-style comments on imported frames)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/workspace/figma-review
+EnvironmentFile=/workspace/figma-review/app.env
+ExecStart=/workspace/figma-review/.venv/bin/python /workspace/figma-review/app.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
