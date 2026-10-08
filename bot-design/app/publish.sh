@@ -1,9 +1,9 @@
 #!/bin/sh
-# Publish (or update) the Figma Design Review app artifact for this bot.
+# Publish (or update) the Design Bot app artifact for this bot.
 set -e
 ID="${1:-figma-review}"
 PORT="${PORT:-8100}"
-TITLE="${TITLE:-Figma Design Review}"
+TITLE="${TITLE:-Design Bot}"
 BODY=$(cat <<EOF
 {"version":2,"host":"vm","sandbox_id":"$PROMPTQL_SANDBOX_ID","kind":"web","port":$PORT,"protocol":"http",
  "readiness":{"path":"/readyz"},

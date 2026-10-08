@@ -1,4 +1,4 @@
-"""Figma Design Review — standalone, Figma-style commenting on frames imported from any Figma link.
+"""Design Bot — standalone, Figma-style commenting on frames imported from any Figma link.
 
 - Paste a Figma file link (optionally with ?node-id=…). The app pulls the frames in through the
   visitor's own Figma connection (PromptQL integration `figma` / `__figma`), renders them to PNG and
@@ -61,7 +61,9 @@ CREATE TABLE IF NOT EXISTS files(
   node_filter TEXT,
   last_modified TEXT,
   imported_by TEXT, imported_by_name TEXT,
-  imported_at REAL
+  imported_at REAL,
+  source TEXT DEFAULT 'figma',    -- 'figma' (pulled in) | 'local' (started here)
+  linked_url TEXT                 -- for local designs: the Figma file they were pushed to
 );
 CREATE TABLE IF NOT EXISTS frames(
   id TEXT PRIMARY KEY,            -- file_key|node_id
@@ -70,7 +72,12 @@ CREATE TABLE IF NOT EXISTS frames(
   name TEXT, page TEXT, ord INTEGER,
   width REAL, height REAL,        -- node bounding box (Figma units)
   img_w INTEGER, img_h INTEGER,   -- rendered png size
-  rendered_at REAL
+  rendered_at REAL,
+  kind TEXT DEFAULT 'figma',      -- 'figma' (rendered PNG from Figma) | 'local' (drawn here)
+  doc TEXT,                       -- design document (JSON) drawn on top of / instead of the render
+  doc_version INTEGER DEFAULT 0,
+  doc_updated_by TEXT, doc_updated_by_name TEXT, doc_updated_at REAL,
+  created_by TEXT
 );
 CREATE TABLE IF NOT EXISTS threads(
   id TEXT PRIMARY KEY,
@@ -80,7 +87,8 @@ CREATE TABLE IF NOT EXISTS threads(
   x REAL NOT NULL, y REAL NOT NULL,   -- normalized 0..1 inside the frame
   resolved INTEGER NOT NULL DEFAULT 0, resolved_by TEXT, resolved_at REAL,
   created_by TEXT NOT NULL, created_by_name TEXT, created_at REAL NOT NULL,
-  figma_comment_id TEXT, pushed_at REAL
+  figma_comment_id TEXT, pushed_at REAL,
+  figma_file_key TEXT             -- file the comment was pushed to (differs from file_key for local designs)
 );
 CREATE TABLE IF NOT EXISTS messages(
   id TEXT PRIMARY KEY,
@@ -95,6 +103,31 @@ CREATE INDEX IF NOT EXISTS idx_thread_file ON threads(file_key, seq);
 CREATE INDEX IF NOT EXISTS idx_frame_file ON frames(file_key, ord);
 """
 
+# columns added after the first release; applied to existing databases on startup
+MIGRATIONS = [
+    ("files", "source", "TEXT DEFAULT 'figma'"),
+    ("files", "linked_url", "TEXT"),
+    ("frames", "kind", "TEXT DEFAULT 'figma'"),
+    ("frames", "doc", "TEXT"),
+    ("frames", "doc_version", "INTEGER DEFAULT 0"),
+    ("frames", "doc_updated_by", "TEXT"),
+    ("frames", "doc_updated_by_name", "TEXT"),
+    ("frames", "doc_updated_at", "REAL"),
+    ("frames", "created_by", "TEXT"),
+    ("threads", "figma_file_key", "TEXT"),
+]
+EMPTY_DOC = {"bg": "#ffffff", "els": []}
+MAX_DIM = 10000
+MAX_DOC_BYTES = 6_000_000      # images are embedded as data URIs; the client downsizes them first
+MAX_ELEMENTS = 2000
+
+
+def migrate():
+    for table, col, decl in MIGRATIONS:
+        cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+        if col not in cols:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
+
 
 @asynccontextmanager
 async def lifespan(_app):
@@ -105,6 +138,7 @@ async def lifespan(_app):
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.executescript(SCHEMA)
+    migrate()
     http = httpx.AsyncClient(timeout=httpx.Timeout(90.0, connect=15.0), follow_redirects=True)
     READY = True
     try:
@@ -335,7 +369,7 @@ async def do_import(me: dict, url: str) -> dict:
         if kept == 0:
             raise HTTPException(502, "Figma did not return any rendered images for those frames.")
         # frames that vanished from the design stay in the DB only if they still carry threads
-        for row in conn.execute("SELECT id FROM frames WHERE file_key=?", (key,)).fetchall():
+        for row in conn.execute("SELECT id FROM frames WHERE file_key=? AND COALESCE(kind,'figma')='figma'", (key,)).fetchall():
             if row["id"] not in ok_ids:
                 n = conn.execute("SELECT COUNT(1) FROM threads WHERE frame_id=?", (row["id"],)).fetchone()[0]
                 if n == 0:
@@ -366,8 +400,17 @@ def file_payload(key: str) -> dict:
         raise HTTPException(404, "File not imported yet")
     frames = [dict(r) for r in conn.execute("SELECT * FROM frames WHERE file_key=? ORDER BY ord", (key,))]
     for fr in frames:
-        fr["image"] = f"/frames/{key}/{fr['node_id'].replace(':', '-')}.png?v={int(fr['rendered_at'] or 0)}"
-        fr["figma_url"] = f"https://www.figma.com/design/{key}/?node-id={fr['node_id'].replace(':', '-')}"
+        fr.pop("doc", None)  # fetched separately via /api/frames/{id}/doc (can be large)
+        fr["kind"] = fr.get("kind") or "figma"
+        fr["doc_version"] = fr.get("doc_version") or 0
+        if fr["kind"] == "figma":
+            fr["image"] = f"/frames/{key}/{fr['node_id'].replace(':', '-')}.png?v={int(fr['rendered_at'] or 0)}"
+            fr["figma_url"] = f"https://www.figma.com/design/{key}/?node-id={fr['node_id'].replace(':', '-')}"
+        else:
+            fr["image"] = None
+            fr["figma_url"] = None
+    f = dict(f)
+    f["source"] = f.get("source") or "figma"
     rows = conn.execute("SELECT * FROM threads WHERE file_key=? ORDER BY seq", (key,)).fetchall()
     msgs = conn.execute("SELECT m.* FROM messages m JOIN threads t ON t.id=m.thread_id WHERE t.file_key=? "
                         "ORDER BY m.created_at", (key,)).fetchall()
@@ -456,6 +499,292 @@ async def delete_file(key: str, req: Request):
     return Response(status_code=204)
 
 
+# ------------------------------------------------------------------ designs started here
+def _clean_dim(v, default):
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return default
+    return max(8.0, min(float(MAX_DIM), v))
+
+
+def _new_local_key() -> str:
+    # same alphabet as Figma keys so every existing regex/route keeps working; prefix 'L' marks local
+    while True:
+        k = "L" + uuid.uuid4().hex[:21]
+        if not conn.execute("SELECT 1 FROM files WHERE key=?", (k,)).fetchone():
+            return k
+
+
+def _add_local_frame(key: str, me: dict, name: str, w: float, h: float) -> dict:
+    ordn = conn.execute("SELECT COALESCE(MAX(ord),-1)+1 FROM frames WHERE file_key=?", (key,)).fetchone()[0]
+    nid = "local:" + uuid.uuid4().hex[:8]
+    fid = f"{key}|{nid}"
+    now = time.time()
+    conn.execute("INSERT INTO frames(id,file_key,node_id,name,page,ord,width,height,img_w,img_h,rendered_at,kind,doc,"
+                 "doc_version,doc_updated_by,doc_updated_by_name,doc_updated_at,created_by) "
+                 "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                 (fid, key, nid, name, "", ordn, w, h, int(w), int(h), now, "local",
+                  json.dumps(EMPTY_DOC), 0, me["id"], me["name"], now, me["id"]))
+    return dict(conn.execute("SELECT * FROM frames WHERE id=?", (fid,)).fetchone())
+
+
+@app.post("/api/designs")
+async def create_design(req: Request):
+    """Option A on the start screen: start a blank design here (no Figma file involved yet)."""
+    me = require_user(req)
+    data = await req.json()
+    name = (data.get("name") or "").strip()[:120] or "Untitled design"
+    w = _clean_dim(data.get("width"), 1440.0)
+    h = _clean_dim(data.get("height"), 1024.0)
+    key = _new_local_key()
+    now = time.time()
+    conn.execute("INSERT INTO files(key,name,url,node_filter,last_modified,imported_by,imported_by_name,imported_at,source) "
+                 "VALUES(?,?,?,?,?,?,?,?,?)", (key, name, None, None, None, me["id"], me["name"], now, "local"))
+    fr = _add_local_frame(key, me, (data.get("frame_name") or "Frame 1").strip()[:120] or "Frame 1", w, h)
+    return {"key": key, "frame_id": fr["id"]}
+
+
+@app.post("/api/files/{key}/frames")
+async def add_frame(key: str, req: Request):
+    """Add a blank frame to a design (local designs only — Figma files get frames from Figma)."""
+    me = require_user(req)
+    f = conn.execute("SELECT * FROM files WHERE key=?", (key,)).fetchone()
+    if not f:
+        raise HTTPException(404, "Design not found")
+    if (f["source"] or "figma") != "local":
+        raise HTTPException(400, "Frames of an imported Figma file come from Figma; use Refresh to pull them again")
+    data = await req.json()
+    n = conn.execute("SELECT COUNT(1) FROM frames WHERE file_key=?", (key,)).fetchone()[0]
+    fr = _add_local_frame(key, me, (data.get("name") or f"Frame {n + 1}").strip()[:120] or f"Frame {n + 1}",
+                          _clean_dim(data.get("width"), 1440.0), _clean_dim(data.get("height"), 1024.0))
+    fr.pop("doc", None)
+    return fr
+
+
+@app.delete("/api/frames/{fid}")
+async def delete_frame(fid: str, req: Request):
+    me = require_user(req)
+    fr = conn.execute("SELECT * FROM frames WHERE id=?", (fid,)).fetchone()
+    if not fr:
+        raise HTTPException(404, "Frame not found")
+    if (fr["kind"] or "figma") != "local":
+        raise HTTPException(400, "Imported Figma frames cannot be deleted here")
+    f = conn.execute("SELECT imported_by FROM files WHERE key=?", (fr["file_key"],)).fetchone()
+    if fr["created_by"] not in (None, me["id"]) and (not f or f["imported_by"] != me["id"]):
+        raise HTTPException(403, "Only the person who created this frame (or the design owner) can delete it")
+    if conn.execute("SELECT COUNT(1) FROM frames WHERE file_key=?", (fr["file_key"],)).fetchone()[0] <= 1:
+        raise HTTPException(400, "A design needs at least one frame")
+    conn.execute("DELETE FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE frame_id=?)", (fid,))
+    conn.execute("DELETE FROM threads WHERE frame_id=?", (fid,))
+    conn.execute("DELETE FROM frames WHERE id=?", (fid,))
+    return Response(status_code=204)
+
+
+@app.patch("/api/frames/{fid}")
+async def rename_frame(fid: str, req: Request):
+    me = require_user(req)
+    fr = conn.execute("SELECT * FROM frames WHERE id=?", (fid,)).fetchone()
+    if not fr:
+        raise HTTPException(404, "Frame not found")
+    data = await req.json()
+    name = (data.get("name") or "").strip()[:120]
+    if name:
+        conn.execute("UPDATE frames SET name=? WHERE id=?", (name, fid))
+    if (fr["kind"] or "figma") == "local" and ("width" in data or "height" in data):
+        conn.execute("UPDATE frames SET width=?, height=?, img_w=?, img_h=? WHERE id=?",
+                     (_clean_dim(data.get("width"), fr["width"]), _clean_dim(data.get("height"), fr["height"]),
+                      int(_clean_dim(data.get("width"), fr["width"])), int(_clean_dim(data.get("height"), fr["height"])), fid))
+    out = dict(conn.execute("SELECT * FROM frames WHERE id=?", (fid,)).fetchone())
+    out.pop("doc", None)
+    return out
+
+
+def _count_els(els, depth: int = 0) -> int:
+    """Number of layers in a design, including children of groups (groups nest up to 8 levels)."""
+    if depth > 8:
+        raise HTTPException(400, "Groups are nested too deeply")
+    n = 0
+    for e in els:
+        if not isinstance(e, dict):
+            continue
+        n += 1
+        if e.get("type") == "group":
+            kids = e.get("els")
+            if not isinstance(kids, list):
+                raise HTTPException(400, "A group's els must be a list")
+            n += _count_els(kids, depth + 1)
+    return n
+
+
+def _doc_payload(fr) -> dict:
+    try:
+        doc = json.loads(fr["doc"]) if fr["doc"] else dict(EMPTY_DOC)
+    except Exception:
+        doc = dict(EMPTY_DOC)
+    return {"frame_id": fr["id"], "version": fr["doc_version"] or 0, "doc": doc,
+            "updated_by": fr["doc_updated_by"], "updated_by_name": fr["doc_updated_by_name"], "updated_at": fr["doc_updated_at"]}
+
+
+@app.get("/api/frames/{fid}/doc")
+async def get_doc(fid: str):
+    fr = conn.execute("SELECT * FROM frames WHERE id=?", (fid,)).fetchone()
+    if not fr:
+        raise HTTPException(404, "Frame not found")
+    return _doc_payload(fr)
+
+
+@app.put("/api/frames/{fid}/doc")
+async def put_doc(fid: str, req: Request):
+    """Save the design drawn on a frame. Optimistic concurrency: send the version you edited from;
+    a 409 means someone else saved in between — reload and reapply."""
+    me = require_user(req)
+    fr = conn.execute("SELECT * FROM frames WHERE id=?", (fid,)).fetchone()
+    if not fr:
+        raise HTTPException(404, "Frame not found")
+    raw = await req.body()
+    if len(raw) > MAX_DOC_BYTES:
+        raise HTTPException(413, "Design too large (images are embedded — use smaller images)")
+    try:
+        data = json.loads(raw)
+    except Exception:
+        raise HTTPException(400, "Invalid JSON")
+    doc = data.get("doc")
+    if not isinstance(doc, dict) or not isinstance(doc.get("els"), list):
+        raise HTTPException(400, "doc must be {bg, els:[...]}")
+    if _count_els(doc["els"]) > MAX_ELEMENTS:
+        raise HTTPException(400, f"Too many elements (max {MAX_ELEMENTS})")
+    base = int(data.get("base_version") or 0)
+    cur = fr["doc_version"] or 0
+    if base != cur:
+        return JSONResponse({"error": f"Someone else saved this frame (v{cur}); your copy is v{base}. Reloading.",
+                             "code": "conflict", **_doc_payload(fr)}, status_code=409)
+    now = time.time()
+    conn.execute("UPDATE frames SET doc=?, doc_version=?, doc_updated_by=?, doc_updated_by_name=?, doc_updated_at=? WHERE id=?",
+                 (json.dumps(doc, separators=(",", ":")), cur + 1, me["id"], me["name"], now, fid))
+    return {"frame_id": fid, "version": cur + 1, "updated_by": me["id"], "updated_by_name": me["name"], "updated_at": now}
+
+
+@app.post("/api/files/{key}/link-figma")
+async def link_figma(key: str, req: Request):
+    """Option A's hand-off: remember which Figma file a local design was pasted into, and (optionally)
+    leave a comment there that links back to this board. Figma's REST API cannot create layers, so the
+    design itself travels as SVG via the clipboard — this just records and announces the link."""
+    me = require_user(req)
+    f = conn.execute("SELECT * FROM files WHERE key=?", (key,)).fetchone()
+    if not f:
+        raise HTTPException(404, "Design not found")
+    data = await req.json()
+    url = (data.get("url") or "").strip()
+    try:
+        fkey, _ = parse_link(url)
+    except HTTPException:
+        raise HTTPException(400, "That doesn't look like a Figma file link")
+    conn.execute("UPDATE files SET linked_url=? WHERE key=?", (url, key))
+    out = {"linked_url": url, "figma_key": fkey, "comment_id": None, "warning": None}
+    if data.get("comment", True):
+        board = f"{APP_BASE_URL}/promptql-playground/thread/{THREAD_ID}" if APP_BASE_URL and THREAD_ID else ""
+        msg = (data.get("message") or "").strip() or (
+            f"{me['name']} pasted the design '{f['name']}' from Design Bot into this file."
+            + (f" Review board: {board}" if board else ""))
+        try:
+            r = await figma(me, "POST", f"files/{fkey}/comments", provider=WRITE_PROVIDER,
+                            json_body={"message": msg[:2000], "client_meta": {"x": 0, "y": 0}},
+                            description=f"Leave a comment on Figma file {fkey} linking to the Design Bot board")
+            out["comment_id"] = r.get("id")
+        except FigmaError as e:
+            out["warning"] = f"Link saved, but could not comment in Figma: {e.detail}"
+    return out
+
+
+def _slug(s: str, fallback: str = "design") -> str:
+    s = re.sub(r"[^A-Za-z0-9]+", "-", s or "").strip("-").lower()
+    return (s[:40] or fallback)
+
+
+def build_figma_plugin(key: str, frame_ids: list[str] | None) -> tuple[bytes, str, int]:
+    """Bundle a one-off Figma plugin (manifest.json + code.js) that recreates the chosen frames of a
+    design as native, editable Figma layers. Returns (zip bytes, filename, element count)."""
+    import io
+    import zipfile
+
+    f = conn.execute("SELECT * FROM files WHERE key=?", (key,)).fetchone()
+    if not f:
+        raise HTTPException(404, "File not imported yet")
+    rows = [dict(r) for r in conn.execute("SELECT * FROM frames WHERE file_key=? ORDER BY ord", (key,))]
+    if frame_ids:
+        want = set(frame_ids)
+        rows = [r for r in rows if r["id"] in want]
+    if not rows:
+        raise HTTPException(400, "No frames to push")
+    specs, total = [], 0
+    for r in rows:
+        try:
+            doc = json.loads(r["doc"]) if r.get("doc") else dict(EMPTY_DOC)
+        except Exception:
+            doc = dict(EMPTY_DOC)
+        els = [e for e in (doc.get("els") or []) if isinstance(e, dict) and e.get("type")]
+        total += _count_els(els)
+        kind = r.get("kind") or "figma"
+        specs.append({
+            "name": r.get("name") or "Frame",
+            "width": float(r.get("width") or 100), "height": float(r.get("height") or 100),
+            "kind": kind, "bg": doc.get("bg") or "#ffffff",
+            # imported frames: drop the design next to its Figma original when the plugin runs in that file
+            "node_id": r["node_id"] if kind == "figma" and ":" in (r.get("node_id") or "") else None,
+            "els": els,
+        })
+    if total == 0:
+        raise HTTPException(400, "Nothing drawn on these frames yet — draw something in Design mode (D) first")
+    design = {"app": "Design Bot", "file": f["name"] or key, "key": key,
+              "exported_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "frames": specs}
+    tpl = (BASE / "static" / "figma_plugin.js").read_text(encoding="utf-8")
+    code = tpl.replace("__DESIGN__", json.dumps(design, separators=(",", ":")), 1)
+    name = f"Design Review — {(f['name'] or key)[:40]}"
+    plugin_id = str(10**17 + int(uuid.uuid5(uuid.NAMESPACE_URL, f"figma-review/{key}").int % (9 * 10**17)))
+    manifest = {"name": name, "id": plugin_id, "api": "1.0.0", "main": "code.js",
+                "editorType": ["figma"], "documentAccess": "dynamic-page", "networkAccess": {"allowedDomains": ["none"]}}
+    readme = (
+        f"{name}\n\nThis plugin recreates the design \"{f['name'] or key}\" from Design Bot as native, "
+        "editable Figma layers.\n\nHow to use (Figma Desktop app):\n"
+        "  1. Unzip this folder somewhere on your computer.\n"
+        "  2. Open the Figma file you want the design in.\n"
+        "  3. Menu > Plugins > Development > Import plugin from manifest... and pick manifest.json.\n"
+        "  4. Menu > Plugins > Development > " + name + "\n\n"
+        f"It builds {len(specs)} frame(s) with {total} layers (rectangles, ellipses, lines, text in Inter, images, "
+        "groups and auto-layout frames, with rotation, gradients and drop shadows). "
+        "If the design was drawn on top of a frame imported from this file, it lands right next to that frame; "
+        "otherwise it lands in the middle of your view.\n\nOnly the layers drawn on the board are created. "
+        "The plugin needs no network access and does nothing else.\n"
+    )
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("manifest.json", json.dumps(manifest, indent=2))
+        z.writestr("code.js", code)
+        z.writestr("README.txt", readme)
+    return buf.getvalue(), f"figma-plugin-{_slug(f['name'] or key)}.zip", total
+
+
+@app.get("/api/files/{key}/figma-plugin.zip")
+async def figma_plugin_zip(key: str, req: Request):
+    ids = [s for s in (req.query_params.get("frames") or "").split(",") if s]
+    data, fname, total = build_figma_plugin(key, ids or None)
+    return Response(content=data, media_type="application/zip",
+                    headers={"Content-Disposition": f'attachment; filename="{fname}"',
+                             "X-Layers": str(total), "Cache-Control": "no-store"})
+
+
+@app.get("/static/{fname}")
+async def static_file(fname: str):
+    if not re.fullmatch(r"[A-Za-z0-9_\-]+\.(js|css|svg)", fname):
+        raise HTTPException(404)
+    p = BASE / "static" / fname
+    if not p.exists():
+        raise HTTPException(404)
+    media = {"js": "application/javascript", "css": "text/css", "svg": "image/svg+xml"}[fname.rsplit(".", 1)[1]]
+    return FileResponse(p, media_type=media, headers={"Cache-Control": "no-store"})
+
+
 @app.post("/api/files/{key}/threads")
 async def create_thread(key: str, req: Request):
     me = require_user(req)
@@ -502,9 +831,10 @@ async def add_message(tid: str, req: Request):
     if t["figma_comment_id"]:
         # thread already lives in Figma: mirror the reply
         try:
-            r = await figma(me, "POST", f"files/{t['file_key']}/comments", provider=WRITE_PROVIDER,
+            fkey = t.get("figma_file_key") or t["file_key"]
+            r = await figma(me, "POST", f"files/{fkey}/comments", provider=WRITE_PROVIDER,
                             json_body={"message": f"{me['name']}: {body}", "comment_id": t["figma_comment_id"]},
-                            description=f"Reply to a Figma comment on file {t['file_key']} via Figma Design Review")
+                            description=f"Reply to a Figma comment on file {fkey} via Design Bot")
             conn.execute("UPDATE messages SET figma_comment_id=? WHERE id=?", (r.get("id"), mid))
         except FigmaError as e:
             warn = f"Saved here, but could not mirror the reply to Figma: {e.detail}"
@@ -549,24 +879,38 @@ async def push_thread(tid: str, req: Request):
         raise HTTPException(404, "Frame not found")
     msgs = t["messages"]
     first, rest = msgs[0], msgs[1:]
-    client_meta = {"node_id": fr["node_id"],
-                   "node_offset": {"x": round(t["x"] * (fr["width"] or 0), 2), "y": round(t["y"] * (fr["height"] or 0), 2)}}
+    if (fr["kind"] or "figma") == "local":
+        # design started here: comments go to the Figma file it was pasted into (set via "Push to Figma")
+        f = conn.execute("SELECT linked_url FROM files WHERE key=?", (t["file_key"],)).fetchone()
+        if not f or not f["linked_url"]:
+            return JSONResponse({"error": "This design isn't linked to a Figma file yet. Use 'Push to Figma' on the "
+                                          "board, paste the design into Figma, then push comments.", "code": "not_linked"},
+                                status_code=400)
+        fkey, _ = parse_link(f["linked_url"])
+        # no node to anchor to in Figma (the pasted layers get new ids) — pin on the canvas and say where it was
+        client_meta = {"x": round(t["x"] * (fr["width"] or 0), 2), "y": round(t["y"] * (fr["height"] or 0), 2)}
+        prefix = f"[{fr['name']} @ {round(t['x'] * 100)}%, {round(t['y'] * 100)}%] "
+    else:
+        fkey = t["file_key"]
+        client_meta = {"node_id": fr["node_id"],
+                       "node_offset": {"x": round(t["x"] * (fr["width"] or 0), 2), "y": round(t["y"] * (fr["height"] or 0), 2)}}
+        prefix = ""
     try:
-        r = await figma(me, "POST", f"files/{t['file_key']}/comments", provider=WRITE_PROVIDER,
-                        json_body={"message": f"{first['author_name']}: {first['body']}", "client_meta": client_meta},
-                        description=f"Post a Figma comment on frame '{fr['name']}' of file {t['file_key']} via Figma Design Review")
+        r = await figma(me, "POST", f"files/{fkey}/comments", provider=WRITE_PROVIDER,
+                        json_body={"message": f"{prefix}{first['author_name']}: {first['body']}", "client_meta": client_meta},
+                        description=f"Post a Figma comment on frame '{fr['name']}' of file {fkey} via Design Bot")
     except FigmaError as e:
         code = 400 if e.status not in (401, 403, 404, 429) else e.status
         return JSONResponse({"error": e.detail, "code": e.code}, status_code=code)
     cid = r.get("id")
     now = time.time()
-    conn.execute("UPDATE threads SET figma_comment_id=?, pushed_at=? WHERE id=?", (cid, now, tid))
+    conn.execute("UPDATE threads SET figma_comment_id=?, pushed_at=?, figma_file_key=? WHERE id=?", (cid, now, fkey, tid))
     conn.execute("UPDATE messages SET figma_comment_id=? WHERE id=?", (cid, first["id"]))
     for m in rest:
         try:
-            rr = await figma(me, "POST", f"files/{t['file_key']}/comments", provider=WRITE_PROVIDER,
+            rr = await figma(me, "POST", f"files/{fkey}/comments", provider=WRITE_PROVIDER,
                              json_body={"message": f"{m['author_name']}: {m['body']}", "comment_id": cid},
-                             description=f"Mirror a reply to Figma comment {cid} on file {t['file_key']}")
+                             description=f"Mirror a reply to Figma comment {cid} on file {fkey}")
             conn.execute("UPDATE messages SET figma_comment_id=? WHERE id=?", (rr.get("id"), m["id"]))
         except FigmaError:
             pass
@@ -580,8 +924,12 @@ def summary_markdown(key: str) -> str:
     for t in threads:
         by_frame.setdefault(t["frame_id"], []).append(t)
     open_n = sum(1 for t in threads if not t["resolved"])
+    src = f.get("source") or "figma"
+    figma_line = (f"Figma file: https://www.figma.com/design/{key}/  " if src == "figma"
+                  else (f"Started in Design Bot; pasted into Figma: {f['linked_url']}  " if f.get("linked_url")
+                        else "Started in Design Bot (not pushed to Figma yet)  "))
     lines = [f"# Design review — {f['name']}", "",
-             f"Figma file: https://www.figma.com/design/{key}/  ",
+             figma_line,
              f"{len(frames)} frames · {len(threads)} comment threads ({open_n} open, {len(threads) - open_n} resolved)  ",
              f"Exported {time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime())}", ""]
     for fr in frames:
@@ -589,7 +937,8 @@ def summary_markdown(key: str) -> str:
         if not ts:
             continue
         lines.append(f"## {fr['name']}" + (f" ({fr['page']})" if fr.get("page") else ""))
-        lines.append(f"[Open in Figma]({fr['figma_url']})")
+        if fr.get("figma_url"):
+            lines.append(f"[Open in Figma]({fr['figma_url']})")
         lines.append("")
         for t in ts:
             state = "✅ resolved" if t["resolved"] else "🟣 open"

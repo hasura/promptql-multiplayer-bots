@@ -1,6 +1,6 @@
-# Figma Design Review — reference app
+# Design Bot — reference app
 
-Single FastAPI service + one HTML file. SQLite for state, PNGs on disk for frames.
+Single FastAPI service + one HTML file + `static/editor.js` (vector editor: rect/ellipse/line/text/image/group elements with `rot`, `grad`, `shadow` and group `layout`; see the header comment for the document schema) + `static/figma_plugin.js` (template for the generated push-to-Figma plugin). SQLite for state (threads, local designs, per-frame drawing docs), PNGs on disk for Figma renders.
 
 ## Architecture
 
@@ -55,6 +55,13 @@ Publish: `sh publish.sh figma-review` (needs `PROMPTQL_PLATFORM_API_URL`, `PROMP
 | `POST /api/threads/{id}/resolve {resolved}` | resolve / reopen |
 | `DELETE /api/threads/{id}` | delete (author only) |
 | `POST /api/threads/{id}/push` | create as a Figma comment (`client_meta` node + offset), mirror existing replies |
+| `POST /api/designs {name,width,height}` | option A: start a blank design here (`source=local`, key prefixed `L`) |
+| `POST /api/files/{key}/frames {name,width,height}` | add a blank frame (local designs only) |
+| `PATCH /api/frames/{id} {name,width,height}` | rename; resize local frames |
+| `DELETE /api/frames/{id}` | delete a local frame (creator or design owner; never the last one) |
+| `GET /api/frames/{id}/doc` | drawing document `{version, doc:{bg, els:[…]}, updated_by…}` |
+| `PUT /api/frames/{id}/doc {doc, base_version}` | save the drawing; `409 conflict` with the current doc if `base_version` is stale |
+| `POST /api/files/{key}/link-figma {url, comment?}` | record which Figma file a local design was pasted into; optionally leave a comment there linking back |
 | `GET /api/files/{key}/export.md` | markdown review |
 | `POST /api/files/{key}/save` | store the markdown as text artifact `design-review-<key>` on the bot |
 
@@ -62,10 +69,12 @@ Errors from Figma come back as `{error, code}` with `code` ∈ `not_found` (file
 
 ## Tests
 
-`cd tests && uv run -q e2e_api.py` starts a mock Platform/Figma on `127.0.0.1:8111` and a throwaway app on `:8101`, then runs 43 checks (identity, import paths and errors, pins/replies/resolve/delete permissions, push + mirroring, export, artifact save, and that only visitor tokens ever reach the platform). No credentials needed.
+`cd tests && uv run -q e2e_api.py` starts a mock Platform/Figma on `127.0.0.1:8111` and a throwaway app on `:8101`, then runs 85 checks (identity, import paths and errors, pins/replies/resolve/delete permissions, push + mirroring, export, artifact save, local designs and drawing docs with conflict detection, link-figma and pushing comments from a local design, drawings surviving a re-import, nested groups and recursive layer counts, and that only visitor tokens ever reach the platform). No credentials needed. `node tests/editor_dom.js` drives the editor in jsdom (`cd tests && npm i jsdom` once): drawing, snapping, marquee/multi-select, align/distribute, group/ungroup, rotation, gradient/shadow, auto layout, undo and SVG export. `sh tests/plugin_rich.sh` runs a generated plugin with groups/rotation/gradients/shadows through the Plugin-API stub.
 
 ## Quirks learned the hard way
 
 - `X-PromptQL-Description` and `X-PromptQL-Artifact-Title` are HTTP headers: single line, ASCII only. Frame names can contain `·` or emoji, so they are sanitised before use.
 - Figma URL node ids use dashes (`1-23`); the API wants colons (`1:23`).
+- Figma's REST API has no way to create layers; option A's hand-off is standalone SVG on the clipboard, which Figma pastes as editable vectors. Comments on a local design are posted to the linked file with canvas `client_meta {x,y}` and a `[frame @ x%, y%]` prefix, since the pasted layers get new node ids.
+- Inside the PromptQL artifact side pane the board can be ~600px wide. Fit zoom is computed against the stage and re-run from a `ResizeObserver` until the user zooms by hand; the frame rail becomes a horizontal strip and the sidebar an overlay below 900px.
 - `GET /files/{key}` without `depth` can be huge; the app uses `depth=3` and only collects top-level frames per page (sections are descended one level).
