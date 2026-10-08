@@ -1,0 +1,13 @@
+{
+  "_comment": "Branding for this Bot Factory install. Every key is optional; BF_* env vars override these values (see DEPLOY.md). logo and favicon accept a file name under static/, an https:// URL, or a data: URI. Leave logo empty to show only the app title.",
+  "company_name": "Your Company",
+  "app_title": "Bot Factory",
+  "tagline": "Get your own copy of this room's bots in one click.",
+  "logo": "logo.svg",
+  "logo_alt": "Your Company",
+  "favicon": "favicon.svg",
+  "primary_color": "#01875f",
+  "primary_dark": "#056449",
+  "accent_color": "#3367d6",
+  "hero_mid_color": "#0b8a8f"
+}
