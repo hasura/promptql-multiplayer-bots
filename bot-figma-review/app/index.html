@@ -14,6 +14,7 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
 a{color:#b9a7ff}
 ::selection{background:rgba(106,74,240,.45);color:#fff}
 kbd{font:11px/1 ui-monospace,monospace;border:1px solid rgba(255,255,255,.25);border-radius:4px;padding:2px 4px;color:inherit;opacity:.8}
+code{font:11px/1.4 ui-monospace,monospace;background:var(--sunk);border-radius:4px;padding:1px 4px}
 svg{flex:none}
 .ib{background:none;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 9px;font-size:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:border-color .2s,background .2s,color .2s;text-decoration:none}
 .ib:hover:not(:disabled){border-color:#6b6b6b}
@@ -437,7 +438,7 @@ const isLocalFile = () => S.file && (S.file.source||'figma') === 'local';
 function applyFileChrome() {
   const local = isLocalFile();
   $('#reimport').style.display = local ? 'none' : '';
-  $('#pushDesign').style.display = local ? '' : 'none';
+  $('#pushDesign').title = local ? 'Carry this design into a Figma file' : 'Send what you drew here into Figma as native layers';
   $('#pushAll').style.display = (!local || S.file.linked_url) ? '' : 'none';
 }
 async function openFile(key, frameNode) {
@@ -606,26 +607,52 @@ const closeModal = () => { modal.classList.remove('show'); modal.innerHTML=''; }
 modal.addEventListener('click', ev => { if (ev.target === modal) closeModal(); });
 $('#pushDesign').onclick = () => {
   if (!S.frame) return;
-  const linked = S.file.linked_url;
-  const frames = S.frames.map(f => `<label style="display:flex;gap:8px;align-items:center;font-size:12px"><input type="radio" name="pf" value="${esc(f.id)}" ${f.id===S.frame.id?'checked':''}> ${esc(f.name)} <span class="muted">${Math.round(f.width)}×${Math.round(f.height)}</span></label>`).join('');
+  const local = isLocalFile(); const linked = S.file.linked_url;
+  const frames = S.frames.map(f => `<label style="display:flex;gap:8px;align-items:center;font-size:12px"><input type="checkbox" name="pf" value="${esc(f.id)}" ${f.id===S.frame.id?'checked':''}> ${esc(f.name)} <span class="muted">${Math.round(f.width)}×${Math.round(f.height)}</span></label>`).join('');
+  const where = local
+    ? 'Each frame arrives as a new Figma frame in the middle of your view.'
+    : 'Run it inside the file these frames came from and each design lands as a new frame right next to its original — the original is left untouched.';
   modal.innerHTML = `<div class="mbox" role="dialog" aria-modal="true">
     <h3>Push "${esc(S.file.name)}" to Figma</h3>
-    <p>Figma's API doesn't let apps create layers, so the design travels through your clipboard — it lands in Figma as fully editable vector layers, not a flat image.</p>
-    <div class="mstep"><span class="n">1</span><div><b>Copy a frame as SVG</b><div class="d">Pick the frame, copy it, then in Figma click the canvas and press <kbd>⌘V</kbd> / <kbd>Ctrl+V</kbd>. Repeat for other frames.</div>
-      <div class="ctl" style="flex-direction:column;align-items:flex-start;gap:6px">${frames}</div>
-      <div class="ctl"><button class="ib primary" id="mCopy">Copy SVG</button><button class="ib" id="mDl">Download .svg instead</button></div></div></div>
-    <div class="mstep"><span class="n">2</span><div><b>Link the Figma file</b><div class="d">Paste the link of the Figma file you pasted into. Comment threads from this board can then be pushed there as Figma comments, and the board stays connected to it.</div>
+    <p>Figma's API can't create layers, but a plugin can. The board packs what you drew into a tiny plugin; run it once in Figma and everything becomes native, editable layers — rectangles, text in Inter, lines, images — not a pasted picture.</p>
+    <div class="ctl" style="flex-direction:column;align-items:flex-start;gap:6px;margin:0 0 14px">${frames}</div>
+    <div class="mstep"><span class="n">1</span><div><b>Download the plugin</b><div class="d">A small .zip with a manifest and the design baked in. Unzip it anywhere.</div>
+      <div class="ctl"><button class="ib primary" id="mPlugin">Download Figma plugin</button><span class="d" id="mPluginInfo"></span></div>
+      <div class="err" id="mPluginErr"></div></div></div>
+    <div class="mstep"><span class="n">2</span><div><b>Import it once in Figma Desktop</b><div class="d">In Figma: <b>Plugins → Development → Import plugin from manifest…</b> and pick the unzipped <code>manifest.json</code>. (Development plugins need the desktop app, not the browser.)</div></div></div>
+    <div class="mstep"><span class="n">3</span><div><b>Run it in the file you want</b><div class="d"><b>Plugins → Development → Design Review — ${esc(S.file.name)}</b>. ${where} Re-download and re-run after more edits; it adds a fresh frame each time.</div></div></div>
+    <details style="margin:0 0 14px"><summary class="d" style="cursor:pointer;font-size:12px;color:var(--muted)">Prefer the clipboard? Paste as SVG instead</summary>
+      <div class="d" style="margin-top:6px">Copies the first ticked frame as SVG; in Figma click the canvas and press <kbd>⌘V</kbd> / <kbd>Ctrl+V</kbd>. Also editable, but text comes in as outlines on some setups.</div>
+      <div class="ctl"><button class="ib" id="mCopy">Copy SVG</button><button class="ib" id="mDl">Download .svg</button></div></details>
+    ${local?`<div class="mstep"><span class="n">4</span><div><b>Link the Figma file</b><div class="d">Paste the link of the Figma file you pushed into. Comment threads from this board can then be pushed there as Figma comments, and the board stays connected to it.</div>
       <div class="ctl"><input type="url" id="mUrl" placeholder="https://www.figma.com/design/…" value="${esc(linked||'')}"><button class="ib ${linked?'':'primary'}" id="mLink">${linked?'Update link':'Link'}</button></div>
       <label class="chk" style="margin-top:8px"><input type="checkbox" id="mNotify" checked> Also leave a comment in that Figma file pointing back to this board</label>
       <div class="err" id="mErr"></div>
-      ${linked?`<div class="d" style="margin-top:8px">Currently linked: <a href="${esc(linked)}" target="_blank" rel="noopener">${esc(linked)}</a></div>`:''}</div></div>
+      ${linked?`<div class="d" style="margin-top:8px">Currently linked: <a href="${esc(linked)}" target="_blank" rel="noopener">${esc(linked)}</a></div>`:''}</div></div>`:''}
     <div class="mfoot"><button class="ib" id="mClose">Done</button></div></div>`;
   modal.classList.add('show');
   $('#mClose').onclick = closeModal;
-  const picked = () => S.frames.find(f => f.id === (modal.querySelector('input[name=pf]:checked')||{}).value) || S.frame;
+  const ticked = () => [...modal.querySelectorAll('input[name=pf]:checked')].map(i => i.value);
+  const picked = () => S.frames.find(f => f.id === ticked()[0]) || S.frame;
   const withFrame = async fn => { const f = picked(); if (f.id !== S.frame.id) { selectFrame(f); await new Promise(r=>setTimeout(r,250)); } return fn(); };
   $('#mCopy').onclick = () => withFrame(() => Editor.copySVG());
   $('#mDl').onclick = () => withFrame(() => Editor.downloadSVG());
+  $('#mPlugin').onclick = async () => {
+    const ids = ticked(); const err = $('#mPluginErr'); err.className = 'err'; const info = $('#mPluginInfo'); info.textContent = '';
+    if (!ids.length) { err.textContent = 'Tick at least one frame.'; err.classList.add('show'); return; }
+    const b = $('#mPlugin'); b.disabled = true;
+    try {
+      const r = await fetch(`/api/files/${S.key}/figma-plugin.zip?frames=${encodeURIComponent(ids.join(','))}`);
+      if (!r.ok) { let j = null; try { j = await r.json(); } catch {} throw new Error((j && (j.detail || j.error)) || `Download failed (${r.status})`); }
+      const name = ((r.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/) || [])[1] || 'figma-plugin.zip';
+      const blob = await r.blob(); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      info.textContent = `${name} · ${r.headers.get('X-Layers') || '?'} layers in ${ids.length} frame${ids.length===1?'':'s'}`;
+      toast('Plugin downloaded — import it in Figma Desktop');
+    } catch (e) { err.textContent = e.message; err.classList.add('show'); }
+    finally { b.disabled = false; }
+  };
+  if (!local) return;
   $('#mLink').onclick = async () => {
     const url = $('#mUrl').value.trim(); const err = $('#mErr'); err.className='err';
     if (!url) { err.textContent = 'Paste the Figma file link first.'; err.classList.add('show'); return; }

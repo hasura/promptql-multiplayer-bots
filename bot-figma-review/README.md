@@ -7,7 +7,7 @@ A standalone design-and-review board that runs on the bot's VM and works both wa
 ## What you get
 
 - **Start from a blank frame.** Pick a size (desktop, phone, social…), press `D`, and draw: rectangles, ellipses, lines, text, pasted or dropped images. Undo/redo, properties and layers panels, autosave with conflict detection, live polling so everyone on the board sees edits. Add more frames as you go.
-- **Carry it into Figma.** "Push to Figma" copies a frame as SVG; `⌘V` on a Figma canvas turns it into editable vector layers. Link the Figma file and the board can also leave a note there and push its comment threads into that file.
+- **Carry it into Figma as native layers.** "Push to Figma" downloads a tiny generated Figma plugin with the drawing baked in; import it once in Figma Desktop (Plugins → Development → Import plugin from manifest…) and run it in the target file, and every rectangle, ellipse, line, text (Inter) and image becomes a real, editable Figma node. Drawings made on top of an imported frame land right next to the original frame. Copy-SVG → `⌘V` remains as a clipboard fallback. Link the Figma file and the board can also leave a note there and push its comment threads into that file.
 - **Import from any link.** `figma.com/design/<key>/…` or `figma.com/file/…`; add `?node-id=…` to import one frame or one section. Frames are rendered at 2× through the importer's own Figma connection, so the file only needs to be shared with the person importing.
 - **Review together.** Frame rail on the left, zoomable frame in the middle (fits the pane, refits on resize), comments or design tools on the right. `C` to comment, `V` to browse, `D` to design — drawing works on imported frames too and survives a refresh from Figma. Numbered pins, threaded replies, resolve/reopen, author-only delete. Everyone opening the app sees the same board.
 - **Hand off to Figma.** "Push to Figma" on a thread (or "Push all") creates it as a Figma comment on the same frame at the same offset; later replies follow automatically. Uses the personal-token Figma integration (`figma`); the OAuth one (`__figma`) is read-only and is used for imports only.
@@ -25,7 +25,7 @@ See [`app/README.md`](app/README.md) for architecture, configuration, API, and t
 
 ## Limits
 
-- Figma's REST API cannot create or edit layers, so a design started here lands in Figma via SVG paste (editable, but a one-way copy — later edits here aren't synced) rather than an automatic upload. Comments are pushed automatically.
+- Figma's REST API cannot create or edit layers, so a design reaches Figma through a generated plugin the user runs once in Figma Desktop (or via SVG paste). It is a one-way copy — later edits here aren't synced; re-run to add a fresh frame. Comments are pushed automatically through the API.
 - Figma has no "list my files" API, so a link is always needed; the app cannot browse your Figma account.
 - A file that isn't shared with your Figma account returns the same 404 as a wrong key.
 - Frame renders cannot exceed the resolution of placed raster assets.

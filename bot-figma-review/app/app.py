@@ -680,6 +680,82 @@ async def link_figma(key: str, req: Request):
     return out
 
 
+def _slug(s: str, fallback: str = "design") -> str:
+    s = re.sub(r"[^A-Za-z0-9]+", "-", s or "").strip("-").lower()
+    return (s[:40] or fallback)
+
+
+def build_figma_plugin(key: str, frame_ids: list[str] | None) -> tuple[bytes, str, int]:
+    """Bundle a one-off Figma plugin (manifest.json + code.js) that recreates the chosen frames of a
+    design as native, editable Figma layers. Returns (zip bytes, filename, element count)."""
+    import io
+    import zipfile
+
+    f = conn.execute("SELECT * FROM files WHERE key=?", (key,)).fetchone()
+    if not f:
+        raise HTTPException(404, "File not imported yet")
+    rows = [dict(r) for r in conn.execute("SELECT * FROM frames WHERE file_key=? ORDER BY ord", (key,))]
+    if frame_ids:
+        want = set(frame_ids)
+        rows = [r for r in rows if r["id"] in want]
+    if not rows:
+        raise HTTPException(400, "No frames to push")
+    specs, total = [], 0
+    for r in rows:
+        try:
+            doc = json.loads(r["doc"]) if r.get("doc") else dict(EMPTY_DOC)
+        except Exception:
+            doc = dict(EMPTY_DOC)
+        els = [e for e in (doc.get("els") or []) if isinstance(e, dict) and e.get("type")]
+        total += len(els)
+        kind = r.get("kind") or "figma"
+        specs.append({
+            "name": r.get("name") or "Frame",
+            "width": float(r.get("width") or 100), "height": float(r.get("height") or 100),
+            "kind": kind, "bg": doc.get("bg") or "#ffffff",
+            # imported frames: drop the design next to its Figma original when the plugin runs in that file
+            "node_id": r["node_id"] if kind == "figma" and ":" in (r.get("node_id") or "") else None,
+            "els": els,
+        })
+    if total == 0:
+        raise HTTPException(400, "Nothing drawn on these frames yet — draw something in Design mode (D) first")
+    design = {"app": "Figma Design Review", "file": f["name"] or key, "key": key,
+              "exported_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "frames": specs}
+    tpl = (BASE / "static" / "figma_plugin.js").read_text(encoding="utf-8")
+    code = tpl.replace("__DESIGN__", json.dumps(design, separators=(",", ":")), 1)
+    name = f"Design Review — {(f['name'] or key)[:40]}"
+    plugin_id = str(10**17 + int(uuid.uuid5(uuid.NAMESPACE_URL, f"figma-review/{key}").int % (9 * 10**17)))
+    manifest = {"name": name, "id": plugin_id, "api": "1.0.0", "main": "code.js",
+                "editorType": ["figma"], "documentAccess": "dynamic-page", "networkAccess": {"allowedDomains": ["none"]}}
+    readme = (
+        f"{name}\n\nThis plugin recreates the design \"{f['name'] or key}\" from Figma Design Review as native, "
+        "editable Figma layers.\n\nHow to use (Figma Desktop app):\n"
+        "  1. Unzip this folder somewhere on your computer.\n"
+        "  2. Open the Figma file you want the design in.\n"
+        "  3. Menu > Plugins > Development > Import plugin from manifest... and pick manifest.json.\n"
+        "  4. Menu > Plugins > Development > " + name + "\n\n"
+        f"It builds {len(specs)} frame(s) with {total} layers (rectangles, ellipses, lines, text in Inter, images). "
+        "If the design was drawn on top of a frame imported from this file, it lands right next to that frame; "
+        "otherwise it lands in the middle of your view.\n\nOnly the layers drawn on the board are created. "
+        "The plugin needs no network access and does nothing else.\n"
+    )
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("manifest.json", json.dumps(manifest, indent=2))
+        z.writestr("code.js", code)
+        z.writestr("README.txt", readme)
+    return buf.getvalue(), f"figma-plugin-{_slug(f['name'] or key)}.zip", total
+
+
+@app.get("/api/files/{key}/figma-plugin.zip")
+async def figma_plugin_zip(key: str, req: Request):
+    ids = [s for s in (req.query_params.get("frames") or "").split(",") if s]
+    data, fname, total = build_figma_plugin(key, ids or None)
+    return Response(content=data, media_type="application/zip",
+                    headers={"Content-Disposition": f'attachment; filename="{fname}"',
+                             "X-Layers": str(total), "Cache-Control": "no-store"})
+
+
 @app.get("/static/{fname}")
 async def static_file(fname: str):
     if not re.fullmatch(r"[A-Za-z0-9_\-]+\.(js|css|svg)", fname):

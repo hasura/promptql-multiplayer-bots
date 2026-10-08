@@ -2,12 +2,12 @@
 
 You are setting up **Figma Design Review**: a standalone app on this bot's VM where PMs and designers design and review together, with or without Figma. The home screen offers two ways in:
 
-1. **Start a design here** — a blank frame with a small vector editor (rectangles, ellipses, lines, text, images). When it's ready it is carried into any Figma file as editable layers (SVG via the clipboard), and the board stays linked to that file so comment threads can be pushed there too.
+1. **Start a design here** — a blank frame with a small vector editor (rectangles, ellipses, lines, text, images). When it's ready it is carried into any Figma file as native, editable layers (a generated Figma plugin, or SVG via the clipboard), and the board stays linked to that file so comment threads can be pushed there too.
 2. **Pull from Figma** — paste a Figma link; the frames are rendered into the app, people can draw on top of them, drop numbered pins, reply in threads, resolve or reopen, and push any thread back into the Figma file as a native comment at the same spot.
 
 Nobody needs a Figma seat to comment or draw — only the person importing needs access to the file.
 
-Be straight about the one limitation when you hand over: Figma's REST API cannot create or modify layers, so a design started here reaches Figma by **Copy SVG → ⌘V in Figma** (editable vectors), not by an automatic upload. Comments do go in automatically.
+Be straight about the one limitation when you hand over: Figma's REST API cannot create or modify layers, so a design drawn here reaches Figma by **Push to Figma → download the generated plugin → import it once in Figma Desktop → run it** (native, editable layers; drawings on an imported frame land next to the original), or by Copy SVG → ⌘V as a fallback — not by an automatic upload. Comments do go in automatically.
 
 ## Input
 
@@ -69,7 +69,7 @@ If a link was supplied as input, you cannot import it on their behalf — import
 Reply with the artifact (`<artifact type="html" identifier="figma-review" />` renders the app card), then in two or three lines:
 - two ways to start: **Start a design here** (blank frame, draw with `D`) or **Pull from Figma** (paste a link; the file must be shared with their Figma account);
 - `C` to comment, `V` to browse, `D` to design; click a frame to pin; everyone sees the same board;
-- Push to Figma copies a frame as SVG to paste into Figma as editable layers and links the file; Push all sends threads into Figma as comments; Export / Download .md / Save to PromptQL export the work.
+- Push to Figma downloads a generated Figma plugin (`GET /api/files/{key}/figma-plugin.zip?frames=…`, built from `app/static/figma_plugin.js`) that recreates the ticked frames as native layers; Copy SVG remains as a fallback; local designs can also link the Figma file; Push all sends threads into Figma as comments; Export / Download .md / Save to PromptQL export the work.
 
 Offer to add a scheduled refresh (re-import frames daily) only if they say the design is still changing.
 

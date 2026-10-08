@@ -183,6 +183,19 @@ def main():
         r = c.put(f"/api/frames/{home_fr2['id']}/doc", json={"doc": doc1, "base_version": 0}, headers=A); check("9z draw on imported frame", r.status_code == 200)
         c.post("/api/files/import", json={"url": f"https://www.figma.com/design/{mp.FILE_KEY}/x"}, headers=A)
         check("9z2 drawing kept after refresh", c.get(f"/api/frames/{home_fr2['id']}/doc").json()["version"] == 1)
+        # 10. native push: generated Figma plugin bundle
+        import io as _io, zipfile as _zf
+        r = c.put(f"/api/frames/{f2}/doc", json={"doc": doc2, "base_version": 0}, headers=A)  # the only frame left after 9w
+        r = c.get(f"/api/files/{LK}/figma-plugin.zip"); check("10a plugin zip 200", r.status_code == 200 and r.headers["content-type"] == "application/zip" and r.headers["x-layers"] == str(len(doc2["els"])), (r.status_code, r.text[:120]))
+        zf = _zf.ZipFile(_io.BytesIO(r.content)); names = set(zf.namelist())
+        check("10b bundle has manifest, code, readme", names == {"manifest.json", "code.js", "README.txt"}, names)
+        man = json.loads(zf.read("manifest.json")); check("10c manifest shape", man["main"] == "code.js" and man["api"] == "1.0.0" and man["id"].isdigit() and man["networkAccess"]["allowedDomains"] == ["none"], man)
+        code = zf.read("code.js").decode(); d = json.loads(code.split("const DESIGN = ", 1)[1].split(";\n", 1)[0])
+        check("10d design embedded", d["key"] == LK and len(d["frames"]) == 1 and d["frames"][0]["kind"] == "local" and len(d["frames"][0]["els"]) == len(doc2["els"]) and d["frames"][0]["node_id"] is None and d["frames"][0]["bg"] == "#101010", json.dumps(d)[:200])
+        r = c.get(f"/api/files/{LK}/figma-plugin.zip?frames=nope"); check("10e unknown frame 400", r.status_code == 400)
+        r = c.get(f"/api/files/{mp.FILE_KEY}/figma-plugin.zip?frames={home_fr2['id']}"); d = json.loads(r.content and _zf.ZipFile(_io.BytesIO(r.content)).read("code.js").decode().split("const DESIGN = ", 1)[1].split(";\n", 1)[0])
+        check("10f imported frame keeps figma node id for placement", r.status_code == 200 and d["frames"][0]["kind"] == "figma" and d["frames"][0]["node_id"] == home_fr2["node_id"], r.status_code)
+        r = c.get(f"/api/files/{mp.FILE_KEY}/figma-plugin.zip?frames={mob['id']}"); check("10g undrawn frame 400", r.status_code == 400 and "draw" in r.text.lower(), (r.status_code, r.headers.get("content-type")))
         r = c.delete(f"/api/files/{LK}", headers=P); check("9z3 local design delete 204", r.status_code == 204)
 
         # 8. delete file: importer only
