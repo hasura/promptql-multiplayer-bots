@@ -1,4 +1,4 @@
-Set up Figma Design Review: a standalone app on your VM where PMs and designers import a Figma design from a link, pin comments on the frames, discuss and resolve them together, and push threads back into Figma.
+Set up Figma Design Review: a standalone app on your VM where PMs and designers either start a design here and carry it into Figma, or import a Figma design from a link and keep working on it — drawing, pinning comments, resolving together, and pushing threads back into Figma.
 
 Figma link (optional — leave blank and I'll paste it in the app): 
 

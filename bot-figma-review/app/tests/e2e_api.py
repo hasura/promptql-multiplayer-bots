@@ -141,6 +141,50 @@ def main():
         bearers = {h.get("Authorization") for _, p, h in mp.STATE["calls"] if p.startswith("/v1/")}
         check("7a only visitor tokens hit the platform", bearers <= {f"Bearer {ALOK}", f"Bearer {PRIYA}", f"Bearer {NOFIGMA}"}, str(bearers)[:200])
 
+        # 9. design started here (option A) + drawing layer on imported frames
+        home_fr2 = c.get(f"/api/files/{mp.FILE_KEY}").json()["frames"][0]
+        r = c.get(f"/api/frames/{home_fr2['id']}/doc"); check("9a imported frame has empty doc v0", r.status_code == 200 and r.json()["version"] == 0 and r.json()["doc"]["els"] == [], r.text)
+        r = c.post("/api/designs", json={"name": "Onboarding v2", "width": 390, "height": 844}); check("9b anonymous create 401", r.status_code == 401)
+        r = c.post("/api/designs", json={"name": "Onboarding v2", "width": 390, "height": 844}, headers=P)
+        check("9c create local design", r.status_code == 200 and r.json()["key"].startswith("L") and r.json()["frame_id"], r.text)
+        LK = r.json()["key"]; fid = r.json()["frame_id"]
+        d = c.get(f"/api/files/{LK}").json()
+        check("9d local payload", d["file"]["source"] == "local" and d["file"]["imported_by_name"] == "Priya PM" and len(d["frames"]) == 1
+              and d["frames"][0]["kind"] == "local" and d["frames"][0]["image"] is None and d["frames"][0]["width"] == 390 and "doc" not in d["frames"][0], json.dumps(d)[:300])
+        check("9e home list shows source", any(f["key"] == LK and f["source"] == "local" for f in c.get("/api/files").json()["files"]))
+        doc1 = {"bg": "#ffffff", "els": [{"id": "a1", "type": "rect", "x": 10, "y": 10, "w": 100, "h": 50, "fill": "#d9d9d9", "stroke": "", "sw": 1, "r": 8, "opacity": 1}]}
+        r = c.put(f"/api/frames/{fid}/doc", json={"doc": doc1, "base_version": 0}, headers=P); check("9f save doc v1", r.status_code == 200 and r.json()["version"] == 1, r.text)
+        r = c.put(f"/api/frames/{fid}/doc", json={"doc": doc1, "base_version": 0}, headers=A); check("9g stale save -> 409 with current doc", r.status_code == 409 and r.json()["code"] == "conflict" and r.json()["version"] == 1 and r.json()["doc"]["els"][0]["id"] == "a1", r.text)
+        doc2 = {"bg": "#101010", "els": doc1["els"] + [{"id": "t1", "type": "text", "x": 20, "y": 80, "w": 200, "h": 26, "fill": "#111", "fs": 20, "fw": 600, "align": "left", "text": "Hello", "opacity": 1}]}
+        r = c.put(f"/api/frames/{fid}/doc", json={"doc": doc2, "base_version": 1}, headers=A); check("9h save doc v2 by alok", r.status_code == 200 and r.json()["version"] == 2 and r.json()["updated_by_name"] == "Alok Ranjan")
+        r = c.get(f"/api/frames/{fid}/doc"); check("9i doc readable by anyone", r.json()["version"] == 2 and len(r.json()["doc"]["els"]) == 2 and r.json()["updated_by_name"] == "Alok Ranjan")
+        r = c.put(f"/api/frames/{fid}/doc", json={"doc": {"els": "nope"}, "base_version": 2}, headers=A); check("9j bad doc 400", r.status_code == 400)
+        r = c.put(f"/api/frames/{fid}/doc", json={"doc": doc2, "base_version": 2}); check("9k anonymous save 401", r.status_code == 401)
+        r = c.post(f"/api/files/{LK}/frames", json={"name": "Step 2"}, headers=A); check("9l add frame", r.status_code == 200 and r.json()["kind"] == "local" and r.json()["name"] == "Step 2" and r.json()["ord"] == 1, r.text)
+        f2 = r.json()["id"]
+        r = c.post(f"/api/files/{mp.FILE_KEY}/frames", json={}, headers=A); check("9m no local frames on figma files 400", r.status_code == 400)
+        r = c.patch(f"/api/frames/{f2}", json={"name": "Step two", "width": 400, "height": 900}, headers=P); check("9n rename+resize frame", r.json()["name"] == "Step two" and r.json()["width"] == 400 and r.json()["img_h"] == 900, r.text)
+        # comments on a local frame
+        r = c.post(f"/api/files/{LK}/threads", json={"frame_id": fid, "x": 0.25, "y": 0.5, "body": "Make the CTA bigger"}, headers=A); lt = r.json(); check("9o thread on local frame", r.status_code == 200 and lt["seq"] == 1, r.text)
+        r = c.post(f"/api/threads/{lt['id']}/push", headers=A); check("9p push before link -> not_linked", r.status_code == 400 and r.json()["code"] == "not_linked", r.text)
+        n2 = len(mp.STATE["comments"])
+        r = c.post(f"/api/files/{LK}/link-figma", json={"url": f"https://www.figma.com/design/{mp.FILE_KEY}/Target?node-id=0-1", "comment": True}, headers=A)
+        check("9q link figma + note", r.status_code == 200 and r.json()["figma_key"] == mp.FILE_KEY and r.json()["comment_id"] and len(mp.STATE["comments"]) == n2 + 1 and "Onboarding v2" in mp.STATE["comments"][-1]["message"] and "thread-xyz" in mp.STATE["comments"][-1]["message"], r.text)
+        check("9r linked_url stored", c.get(f"/api/files/{LK}").json()["file"]["linked_url"].startswith("https://www.figma.com/design/" + mp.FILE_KEY))
+        r = c.post(f"/api/files/{LK}/link-figma", json={"url": "https://example.com/x"}, headers=A); check("9s bad link 400", r.status_code == 400)
+        r = c.post(f"/api/threads/{lt['id']}/push", headers=A)
+        check("9t push after link -> comment on linked file, canvas-anchored", r.status_code == 200 and r.json()["pushed"] and mp.STATE["comments"][-1]["client_meta"] == {"x": 97.5, "y": 422.0} and mp.STATE["comments"][-1]["message"].startswith("[Frame 1 @ 25%, 50%] Alok Ranjan: Make"), json.dumps(mp.STATE["comments"][-1])[:300])
+        r = c.post(f"/api/threads/{lt['id']}/messages", json={"body": "done"}, headers=P); check("9u reply mirrored to linked file", r.status_code == 200 and "warning" not in r.json() and mp.STATE["comments"][-1]["parent_id"] == mp.STATE["comments"][-2]["id"], r.text)
+        md = c.get(f"/api/files/{LK}/export.md").text; check("9v local export md", "Started in Figma Design Review; pasted into Figma" in md and "## Frame 1" in md and "Open in Figma" not in md, md[:300])
+        r = c.delete(f"/api/frames/{fid}", headers=P); check("9w delete frame (owner) 204 w/ threads", r.status_code == 204 and len(c.get(f"/api/files/{LK}").json()["frames"]) == 1)
+        r = c.delete(f"/api/frames/{f2}", headers=P); check("9x cannot delete last frame", r.status_code == 400)
+        r = c.delete(f"/api/frames/{home_fr2['id']}", headers=A); check("9y cannot delete figma frame", r.status_code == 400)
+        # drawing on an imported frame survives a re-import
+        r = c.put(f"/api/frames/{home_fr2['id']}/doc", json={"doc": doc1, "base_version": 0}, headers=A); check("9z draw on imported frame", r.status_code == 200)
+        c.post("/api/files/import", json={"url": f"https://www.figma.com/design/{mp.FILE_KEY}/x"}, headers=A)
+        check("9z2 drawing kept after refresh", c.get(f"/api/frames/{home_fr2['id']}/doc").json()["version"] == 1)
+        r = c.delete(f"/api/files/{LK}", headers=P); check("9z3 local design delete 204", r.status_code == 204)
+
         # 8. delete file: importer only
         r = c.delete(f"/api/files/{mp.FILE_KEY}", headers=P); check("8a non-importer delete 403", r.status_code == 403)
         r = c.delete(f"/api/files/{mp.FILE_KEY}", headers=A); check("8b importer delete 204", r.status_code == 204)

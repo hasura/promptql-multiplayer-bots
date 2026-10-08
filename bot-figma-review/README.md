@@ -1,15 +1,17 @@
 # Bot Figma Review
 
-A standalone Figma-style review board that runs on the bot's VM. Paste any Figma file link; the frames are rendered into the app, and PMs and designers drop numbered pins on them, reply in threads, resolve and reopen — without needing a Figma seat to comment. Any thread can be pushed back into the Figma file as a native comment anchored at the same spot, with replies mirrored. The whole review can be downloaded as markdown or saved to the bot as an artifact.
+A standalone design-and-review board that runs on the bot's VM and works both ways with Figma. **Start a design here** on a blank frame (shapes, text, images) and carry it into Figma as editable layers, or **pull a Figma file in** from a link and keep working on it here. Either way PMs and designers draw on the same frames, drop numbered pins, reply in threads, resolve and reopen — without needing a Figma seat. Threads can be pushed back into the Figma file as native comments, and the review can be downloaded as markdown or saved to the bot as an artifact.
 
 **Try it:** [Prompt](PROMPT.md) (launch link pending)
 
 ## What you get
 
+- **Start from a blank frame.** Pick a size (desktop, phone, social…), press `D`, and draw: rectangles, ellipses, lines, text, pasted or dropped images. Undo/redo, properties and layers panels, autosave with conflict detection, live polling so everyone on the board sees edits. Add more frames as you go.
+- **Carry it into Figma.** "Push to Figma" copies a frame as SVG; `⌘V` on a Figma canvas turns it into editable vector layers. Link the Figma file and the board can also leave a note there and push its comment threads into that file.
 - **Import from any link.** `figma.com/design/<key>/…` or `figma.com/file/…`; add `?node-id=…` to import one frame or one section. Frames are rendered at 2× through the importer's own Figma connection, so the file only needs to be shared with the person importing.
-- **Review together.** Frame rail on the left, zoomable frame in the middle, comments on the right. `C` to comment, `V` to browse. Numbered pins, threaded replies, resolve/reopen, author-only delete. Everyone opening the app sees the same board.
+- **Review together.** Frame rail on the left, zoomable frame in the middle (fits the pane, refits on resize), comments or design tools on the right. `C` to comment, `V` to browse, `D` to design — drawing works on imported frames too and survives a refresh from Figma. Numbered pins, threaded replies, resolve/reopen, author-only delete. Everyone opening the app sees the same board.
 - **Hand off to Figma.** "Push to Figma" on a thread (or "Push all") creates it as a Figma comment on the same frame at the same offset; later replies follow automatically. Uses the personal-token Figma integration (`figma`); the OAuth one (`__figma`) is read-only and is used for imports only.
-- **Export.** Download the review as markdown, or save it as a text artifact on the bot.
+- **Export.** Any frame as SVG or PNG @2×; the review as markdown, or as a text artifact on the bot.
 
 ## Example outcome
 
@@ -23,6 +25,7 @@ See [`app/README.md`](app/README.md) for architecture, configuration, API, and t
 
 ## Limits
 
+- Figma's REST API cannot create or edit layers, so a design started here lands in Figma via SVG paste (editable, but a one-way copy — later edits here aren't synced) rather than an automatic upload. Comments are pushed automatically.
 - Figma has no "list my files" API, so a link is always needed; the app cannot browse your Figma account.
 - A file that isn't shared with your Figma account returns the same 404 as a wrong key.
 - Frame renders cannot exceed the resolution of placed raster assets.
