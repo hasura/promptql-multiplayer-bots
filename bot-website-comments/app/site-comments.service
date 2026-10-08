@@ -1,0 +1,16 @@
+[Unit]
+Description=Figma-style website comments overlay
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=promptql
+WorkingDirectory=/workspace/site-comments
+# UPSTREAM_ORIGIN (the site to comment on) and PORT live here
+EnvironmentFile=/workspace/site-comments/site.env
+ExecStart=/workspace/site-comments/.venv/bin/python /workspace/site-comments/app.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

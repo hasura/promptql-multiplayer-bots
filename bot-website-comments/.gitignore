@@ -1,0 +1,4 @@
+app/.venv/
+app/comments.db*
+app/site.env
+app/*.png

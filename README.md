@@ -14,6 +14,7 @@ Each bot below has a link that opens a new bot with its prompt ready to send. Op
 | [Example Camera Photo Gallery](example-camera-photo-gallery/) | Runs a shared camera app on its VM: live viewfinder or your phone's camera, and one photo gallery for everyone in the bot. | [Prompt](example-camera-photo-gallery/PROMPT.md) (point PromptQL to this repo to build the app) |
 | [Bot Meeting Kanban](bot-meeting-kanban/) | Turns a meeting (notes, transcript or Notion page) into a Trello-style kanban board app on its VM that the whole team updates together. | [Prompt](bot-meeting-kanban/PROMPT.md) (launch link pending) |
 | [Bot last30days](bot-last30days/) | Tells you what people actually said about a topic in the last 30 days — X, web, Hacker News, GitHub, Polymarket, arXiv — ranked by real engagement, written up as a short honest brief. No keys to configure. | [Create bot](https://ql.app/l/TGU3iySl) |
+| [Bot Website Comments](bot-website-comments/) | Puts a Figma-style comment layer on any live website as an app on its VM: everyone drops pins on the real pages, replies in threads and resolves them. | [Prompt](bot-website-comments/PROMPT.md) (launch link pending) |
 
 ## What is in each bot directory
 
