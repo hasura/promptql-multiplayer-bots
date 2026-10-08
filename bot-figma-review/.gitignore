@@ -1,0 +1,6 @@
+.venv/
+data/
+app.env
+tests/shots/
+__pycache__/
+*.log
