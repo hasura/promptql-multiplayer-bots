@@ -175,7 +175,7 @@ def main():
         r = c.post(f"/api/threads/{lt['id']}/push", headers=A)
         check("9t push after link -> comment on linked file, canvas-anchored", r.status_code == 200 and r.json()["pushed"] and mp.STATE["comments"][-1]["client_meta"] == {"x": 97.5, "y": 422.0} and mp.STATE["comments"][-1]["message"].startswith("[Frame 1 @ 25%, 50%] Alok Ranjan: Make"), json.dumps(mp.STATE["comments"][-1])[:300])
         r = c.post(f"/api/threads/{lt['id']}/messages", json={"body": "done"}, headers=P); check("9u reply mirrored to linked file", r.status_code == 200 and "warning" not in r.json() and mp.STATE["comments"][-1]["parent_id"] == mp.STATE["comments"][-2]["id"], r.text)
-        md = c.get(f"/api/files/{LK}/export.md").text; check("9v local export md", "Started in Figma Design Review; pasted into Figma" in md and "## Frame 1" in md and "Open in Figma" not in md, md[:300])
+        md = c.get(f"/api/files/{LK}/export.md").text; check("9v local export md", "Started in Design Bot; pasted into Figma" in md and "## Frame 1" in md and "Open in Figma" not in md, md[:300])
         r = c.delete(f"/api/frames/{fid}", headers=P); check("9w delete frame (owner) 204 w/ threads", r.status_code == 204 and len(c.get(f"/api/files/{LK}").json()["frames"]) == 1)
         r = c.delete(f"/api/frames/{f2}", headers=P); check("9x cannot delete last frame", r.status_code == 400)
         r = c.delete(f"/api/frames/{home_fr2['id']}", headers=A); check("9y cannot delete figma frame", r.status_code == 400)

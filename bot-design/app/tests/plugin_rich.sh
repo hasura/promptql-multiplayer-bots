@@ -7,7 +7,7 @@ TMP=$(mktemp -d)
 import json, sys, pathlib
 tmp = pathlib.Path(sys.argv[1])
 tpl = pathlib.Path("static/figma_plugin.js").read_text()
-rich = {"app": "Figma Design Review", "file": "T", "key": "Lx", "frames": [{"name": "Rich", "width": 400, "height": 300, "kind": "local", "bg": "#ffffff", "node_id": None, "els": [
+rich = {"app": "Design Bot", "file": "T", "key": "Lx", "frames": [{"name": "Rich", "width": 400, "height": 300, "kind": "local", "bg": "#ffffff", "node_id": None, "els": [
   {"id": "g1", "type": "group", "x": 10, "y": 10, "w": 220, "h": 60, "rot": 15, "opacity": 0.9, "layout": {"dir": "row", "gap": 8, "pad": 6},
    "shadow": {"x": 0, "y": 4, "blur": 16, "color": "#000000", "op": 0.25},
    "els": [

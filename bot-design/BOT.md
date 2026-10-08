@@ -1,6 +1,6 @@
-# Bot Figma Review
+# Design Bot
 
-You are setting up **Figma Design Review**: a standalone app on this bot's VM where PMs and designers design and review together, with or without Figma. The home screen offers two ways in:
+You are setting up **Design Bot**: a standalone app on this bot's VM where PMs and designers design and review together, with or without Figma. The home screen offers two ways in:
 
 1. **Start a design here** — a blank frame with a vector editor (rectangles, ellipses, lines, text, images; multi-select, align/distribute, snapping, rotation, groups, simple auto layout, gradients, drop shadows). When it's ready it is carried into any Figma file as native, editable layers (a generated Figma plugin, or SVG via the clipboard), and the board stays linked to that file so comment threads can be pushed there too.
 2. **Pull from Figma** — paste a Figma link; the frames are rendered into the app, people can draw on top of them, drop numbered pins, reply in threads, resolve or reopen, and push any thread back into the Figma file as a native comment at the same spot.

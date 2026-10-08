@@ -1,4 +1,4 @@
-/* Figma Design Review — vector editor
+/* Design Bot — vector editor
  * Document: {bg, els:[...]}. Elements: rect, ellipse, line, text, image, group. A group's `els` are its children,
  * expressed in the same coordinate space as the group itself (the group box hugs them). Rect/ellipse/text/image/group
  * carry `rot` (degrees, clockwise about the centre); rect/ellipse/text may carry `grad` {angle, stops:[{o,c},{o,c}]}

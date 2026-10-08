@@ -1,4 +1,4 @@
-# Bot Figma Review
+# Design Bot
 
 A standalone design-and-review board that runs on the bot's VM and works both ways with Figma. **Start a design here** on a blank frame (shapes, text, images) and carry it into Figma as editable layers, or **pull a Figma file in** from a link and keep working on it here. Either way PMs and designers draw on the same frames, drop numbered pins, reply in threads, resolve and reopen — without needing a Figma seat. Threads can be pushed back into the Figma file as native comments, and the review can be downloaded as markdown or saved to the bot as an artifact.
 

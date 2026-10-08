@@ -1,4 +1,4 @@
-# Figma Design Review — reference app
+# Design Bot — reference app
 
 Single FastAPI service + one HTML file + `static/editor.js` (vector editor: rect/ellipse/line/text/image/group elements with `rot`, `grad`, `shadow` and group `layout`; see the header comment for the document schema) + `static/figma_plugin.js` (template for the generated push-to-Figma plugin). SQLite for state (threads, local designs, per-frame drawing docs), PNGs on disk for Figma renders.
 

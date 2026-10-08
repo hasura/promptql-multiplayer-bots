@@ -1,5 +1,5 @@
 [Unit]
-Description=Figma Design Review (standalone Figma-style comments on imported frames)
+Description=Design Bot (standalone Figma-style comments on imported frames)
 After=network.target
 
 [Service]

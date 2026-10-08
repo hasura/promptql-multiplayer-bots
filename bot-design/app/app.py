@@ -1,4 +1,4 @@
-"""Figma Design Review — standalone, Figma-style commenting on frames imported from any Figma link.
+"""Design Bot — standalone, Figma-style commenting on frames imported from any Figma link.
 
 - Paste a Figma file link (optionally with ?node-id=…). The app pulls the frames in through the
   visitor's own Figma connection (PromptQL integration `figma` / `__figma`), renders them to PNG and
@@ -685,12 +685,12 @@ async def link_figma(key: str, req: Request):
     if data.get("comment", True):
         board = f"{APP_BASE_URL}/promptql-playground/thread/{THREAD_ID}" if APP_BASE_URL and THREAD_ID else ""
         msg = (data.get("message") or "").strip() or (
-            f"{me['name']} pasted the design '{f['name']}' from Figma Design Review into this file."
+            f"{me['name']} pasted the design '{f['name']}' from Design Bot into this file."
             + (f" Review board: {board}" if board else ""))
         try:
             r = await figma(me, "POST", f"files/{fkey}/comments", provider=WRITE_PROVIDER,
                             json_body={"message": msg[:2000], "client_meta": {"x": 0, "y": 0}},
-                            description=f"Leave a comment on Figma file {fkey} linking to the Figma Design Review board")
+                            description=f"Leave a comment on Figma file {fkey} linking to the Design Bot board")
             out["comment_id"] = r.get("id")
         except FigmaError as e:
             out["warning"] = f"Link saved, but could not comment in Figma: {e.detail}"
@@ -736,7 +736,7 @@ def build_figma_plugin(key: str, frame_ids: list[str] | None) -> tuple[bytes, st
         })
     if total == 0:
         raise HTTPException(400, "Nothing drawn on these frames yet — draw something in Design mode (D) first")
-    design = {"app": "Figma Design Review", "file": f["name"] or key, "key": key,
+    design = {"app": "Design Bot", "file": f["name"] or key, "key": key,
               "exported_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "frames": specs}
     tpl = (BASE / "static" / "figma_plugin.js").read_text(encoding="utf-8")
     code = tpl.replace("__DESIGN__", json.dumps(design, separators=(",", ":")), 1)
@@ -745,7 +745,7 @@ def build_figma_plugin(key: str, frame_ids: list[str] | None) -> tuple[bytes, st
     manifest = {"name": name, "id": plugin_id, "api": "1.0.0", "main": "code.js",
                 "editorType": ["figma"], "documentAccess": "dynamic-page", "networkAccess": {"allowedDomains": ["none"]}}
     readme = (
-        f"{name}\n\nThis plugin recreates the design \"{f['name'] or key}\" from Figma Design Review as native, "
+        f"{name}\n\nThis plugin recreates the design \"{f['name'] or key}\" from Design Bot as native, "
         "editable Figma layers.\n\nHow to use (Figma Desktop app):\n"
         "  1. Unzip this folder somewhere on your computer.\n"
         "  2. Open the Figma file you want the design in.\n"
@@ -834,7 +834,7 @@ async def add_message(tid: str, req: Request):
             fkey = t.get("figma_file_key") or t["file_key"]
             r = await figma(me, "POST", f"files/{fkey}/comments", provider=WRITE_PROVIDER,
                             json_body={"message": f"{me['name']}: {body}", "comment_id": t["figma_comment_id"]},
-                            description=f"Reply to a Figma comment on file {fkey} via Figma Design Review")
+                            description=f"Reply to a Figma comment on file {fkey} via Design Bot")
             conn.execute("UPDATE messages SET figma_comment_id=? WHERE id=?", (r.get("id"), mid))
         except FigmaError as e:
             warn = f"Saved here, but could not mirror the reply to Figma: {e.detail}"
@@ -898,7 +898,7 @@ async def push_thread(tid: str, req: Request):
     try:
         r = await figma(me, "POST", f"files/{fkey}/comments", provider=WRITE_PROVIDER,
                         json_body={"message": f"{prefix}{first['author_name']}: {first['body']}", "client_meta": client_meta},
-                        description=f"Post a Figma comment on frame '{fr['name']}' of file {fkey} via Figma Design Review")
+                        description=f"Post a Figma comment on frame '{fr['name']}' of file {fkey} via Design Bot")
     except FigmaError as e:
         code = 400 if e.status not in (401, 403, 404, 429) else e.status
         return JSONResponse({"error": e.detail, "code": e.code}, status_code=code)
@@ -926,8 +926,8 @@ def summary_markdown(key: str) -> str:
     open_n = sum(1 for t in threads if not t["resolved"])
     src = f.get("source") or "figma"
     figma_line = (f"Figma file: https://www.figma.com/design/{key}/  " if src == "figma"
-                  else (f"Started in Figma Design Review; pasted into Figma: {f['linked_url']}  " if f.get("linked_url")
-                        else "Started in Figma Design Review (not pushed to Figma yet)  "))
+                  else (f"Started in Design Bot; pasted into Figma: {f['linked_url']}  " if f.get("linked_url")
+                        else "Started in Design Bot (not pushed to Figma yet)  "))
     lines = [f"# Design review — {f['name']}", "",
              figma_line,
              f"{len(frames)} frames · {len(threads)} comment threads ({open_n} open, {len(threads) - open_n} resolved)  ",
