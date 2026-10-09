@@ -19,9 +19,11 @@ export type Card = {
   updated_at: string
 }
 export type Activity = { at: string; actor: string; text: string; card_id?: string | null }
+export type Brand = { name?: string; logo_url?: string }
 export type Board = {
   title: string
-  meeting: { title: string; date: string; doc_url: string }
+  brand?: Brand
+  meeting?: { title?: string; date?: string; doc_url?: string }
   columns: Column[]
   members: Member[]
   workstreams: string[]

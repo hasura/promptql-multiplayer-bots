@@ -1,0 +1,12 @@
+{
+ "title": "Team Board",
+ "brand": {"name": "", "logo_url": ""},
+ "meeting": {"title": "", "date": "", "doc_url": ""},
+ "members": [],
+ "workstreams": ["General"],
+ "cards": [],
+ "activity": [],
+ "decisions": [],
+ "open_questions": [],
+ "rev": 0
+}

@@ -6,7 +6,7 @@ Give the bot one meeting — notes, a transcript, or a Notion page — and it tu
 
 ## Start
 
-Copy [PROMPT.md](PROMPT.md) and send it. Put your meeting link or Notion link on the `Source:` line, or paste the notes under it. If you leave it blank the bot asks for it first.
+Copy [PROMPT.md](PROMPT.md) and send it. Put your meeting link or Notion link on the `Source:` line, or paste the notes under it. If you leave it blank the bot still sets up the board right away, empty, and asks you for the source once; when you send it, the action items land on that same board.
 
 If your source needs an integration (Google Docs, Notion, a meeting recorder), the bot asks you to connect it only when it gets to that step.
 
@@ -16,6 +16,7 @@ If your source needs an integration (Google Docs, Notion, a meeting recorder), t
 - A live kanban app: **To do / In progress / Blocked / Done** with real drag and drop, click-to-edit cards (title, status, members, workstream, priority, due, description, source quote, comments), a one-row filter bar (search, member avatars, workstream, priority), Board / Table / Activity views, and an open-P0 counter in the top bar.
 - Live sync: every open browser updates within a second of any change.
 - Identity without login: the app recognises who opened it from their PromptQL identity and matches them to a board member. Anyone signed in who edits the board is enrolled as a member on the spot, a card you add is yours by default, and every card remembers who added it. Only read-only outsiders appear as a grey Guest.
+- Your company's logo in the top bar when the bot already knows your company or brand — it never asks for it; otherwise the board keeps its default mark.
 - Owners tagged in chat and told to update their own cards on the board.
 
 Board data lives on the bot's VM and is the single source of truth. Follow-up meetings can be imported into the same board without duplicating cards.

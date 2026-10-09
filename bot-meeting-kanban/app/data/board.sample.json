@@ -1,5 +1,6 @@
 {
  "title": "Product Sync Board",
+ "brand": {"name": "Example Co", "logo_url": ""},
  "meeting": {
   "title": "Weekly product sync",
   "date": "2026-10-07",
