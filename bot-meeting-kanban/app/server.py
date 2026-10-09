@@ -56,6 +56,14 @@ def load() -> dict:
                 DATA.parent.mkdir(parents=True, exist_ok=True)
                 DATA.write_text(SAMPLE.read_text("utf-8"), "utf-8")
             board = json.loads(DATA.read_text("utf-8"))
+            # A board that has no meeting yet (see data/board.empty.json) may omit most keys.
+            board.setdefault("title", "Team Board")
+            if not isinstance(board.get("meeting"), dict):
+                board["meeting"] = {"title": "", "date": "", "doc_url": ""}
+            for k, v in (("members", []), ("workstreams", ["General"]), ("cards", []),
+                         ("activity", []), ("decisions", []), ("open_questions", [])):
+                if not isinstance(board.get(k), list):
+                    board[k] = list(v)
             board["columns"] = COLUMNS
             _state["board"] = board
             _state["rev"] = int(board.get("rev", 0))

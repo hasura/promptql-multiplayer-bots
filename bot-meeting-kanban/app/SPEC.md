@@ -6,7 +6,7 @@ This is the exact spec of the app in this folder. The bot deploys this code unch
 
 - Backend: `server.py`, FastAPI + uvicorn, run with `uv run --script server.py` (dependencies are declared inline). Listens on `PORT` (default 8080). Installed as a persistent service with automatic restart.
 - Frontend: `web/`, Vite 5 + React 18 + TypeScript, `@dnd-kit/core` + `@dnd-kit/sortable` for drag and drop. `npm ci && npm run build` emits `dist/`, which the backend serves.
-- Data: `data/board.json` on disk. If it is missing, the server copies `data/board.sample.json` on first start.
+- Data: `data/board.json` on disk. If it is missing, the server copies `data/board.sample.json` (fictional demo data) on first start. `data/board.empty.json` is the template for a real board that has no meeting yet; the server fills in any missing list keys, so a minimal file is enough.
 
 ## Data model (`board.json`)
 
@@ -14,7 +14,7 @@ This is the exact spec of the app in this folder. The bot deploys this code unch
 title            string
 brand?           { name, logo_url }   optional company branding; logo_url is `/brand/<file>` for a file
                                       saved under `data/brand/`, or any absolute image URL
-meeting          { title, date (YYYY-MM-DD), doc_url }
+meeting          { title, date (YYYY-MM-DD), doc_url }   all empty strings until a meeting is imported
 columns          fixed: todo "To do", in_progress "In progress", blocked "Blocked", done "Done"
 members          [{ id, name, short, initials, color, email? }]
 workstreams      [string]
@@ -49,7 +49,7 @@ A card added without explicit `assignees` is owned by the person who added it, a
 Dark Trello-style board. Do not introduce a light theme.
 
 - Page background: `radial-gradient(1200px 600px at 10% 0%, rgba(122,68,168,.55), transparent 60%)`, `radial-gradient(900px 700px at 100% 100%, rgba(234,105,139,.55), transparent 55%)`, over `linear-gradient(135deg, #3b1d5a 0%, #6d2a6d 45%, #b3497a 100%)`, fixed.
-- Top bar: `rgba(0,0,0,.35)` with `backdrop-filter: blur(10px)`; brand mark — the company's logo (28px, white rounded tile, `object-fit: contain`) when `brand.logo_url` is set, otherwise the default `#579dff` square; board title and meeting link; Board / Table / Activity view switch; live indicator; open-P0 counter; member avatar stack; "you" avatar.
+- Top bar: `rgba(0,0,0,.35)` with `backdrop-filter: blur(10px)`; brand mark — the company's logo (28px, white rounded tile, `object-fit: contain`) when `brand.logo_url` is set, otherwise the default `#579dff` square; board title and meeting link (or "No meeting imported yet"); Board / Table / Activity view switch; live indicator; open-P0 counter; member avatar stack; "you" avatar.
 - Filter row (single horizontal row): search, member avatar toggles, workstream select, priority select, Clear.
 - Lists: `#101204`, 12px radius; list headers with count; add-card at bottom.
 - Cards: `#22272b`, hover `#2c333a`, 8px radius; workstream chip, title, due chip, source icon, comment count, assignee avatars.
@@ -64,5 +64,5 @@ Dark Trello-style board. Do not introduce a light theme.
 ## Deploying on a PromptQL bot VM
 
 1. Build the frontend, then run the server as an enabled persistent service so it restarts with the VM.
-2. Write the seeded `data/board.json` (or let the sample be copied for a first look).
+2. Write `data/board.json`: the seeded plan, or a copy of `data/board.empty.json` with title and members filled when there is no meeting yet (or let the sample be copied for a first look). The server holds the board in memory, so after editing the file by hand restart the service.
 3. Publish an app artifact of kind `web` pointing at the service's port with readiness path `/readyz`.

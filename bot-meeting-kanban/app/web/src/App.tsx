@@ -230,9 +230,14 @@ export default function App() {
           )}
           <div>
             <div className="board-name">{board.title}</div>
-            <a className="meeting" href={board.meeting?.doc_url} target="_blank" rel="noreferrer">
-              {board.meeting?.title} · {board.meeting?.date}
-            </a>
+            {board.meeting?.title ? (
+              <a className="meeting" href={board.meeting.doc_url || undefined} target="_blank" rel="noreferrer">
+                {board.meeting.title}
+                {board.meeting.date ? ` · ${board.meeting.date}` : ''}
+              </a>
+            ) : (
+              <span className="meeting">No meeting imported yet</span>
+            )}
           </div>
         </div>
         <nav className="views">
@@ -385,17 +390,19 @@ export default function App() {
             <div className="panel">
               <h3>Decisions from the catchup</h3>
               <ul className="bullets">
-                {board.decisions.map((d, i) => (
+                {(board.decisions ?? []).map((d, i) => (
                   <li key={i}>{d}</li>
                 ))}
+                {!board.decisions?.length && <li style={{ color: 'var(--muted)' }}>Nothing yet. Decisions appear here once a meeting is imported.</li>}
               </ul>
             </div>
             <div className="panel">
               <h3>Open questions</h3>
               <ul className="bullets">
-                {board.open_questions.map((d, i) => (
+                {(board.open_questions ?? []).map((d, i) => (
                   <li key={i}>{d}</li>
                 ))}
+                {!board.open_questions?.length && <li style={{ color: 'var(--muted)' }}>Nothing yet. Open questions appear here once a meeting is imported.</li>}
               </ul>
             </div>
           </div>

@@ -23,7 +23,7 @@ export type Brand = { name?: string; logo_url?: string }
 export type Board = {
   title: string
   brand?: Brand
-  meeting: { title: string; date: string; doc_url: string }
+  meeting?: { title?: string; date?: string; doc_url?: string }
   columns: Column[]
   members: Member[]
   workstreams: string[]

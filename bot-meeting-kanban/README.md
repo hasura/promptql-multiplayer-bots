@@ -6,7 +6,7 @@ Give the bot one meeting — notes, a transcript, or a Notion page — and it tu
 
 ## Start
 
-Copy [PROMPT.md](PROMPT.md) and send it. Put your meeting link or Notion link on the `Source:` line, or paste the notes under it. If you leave it blank the bot asks for it first.
+Copy [PROMPT.md](PROMPT.md) and send it. Put your meeting link or Notion link on the `Source:` line, or paste the notes under it. If you leave it blank the bot still sets up the board right away, empty, and asks you for the source once; when you send it, the action items land on that same board.
 
 If your source needs an integration (Google Docs, Notion, a meeting recorder), the bot asks you to connect it only when it gets to that step.
 
