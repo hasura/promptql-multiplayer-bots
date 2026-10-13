@@ -16,6 +16,7 @@ Each bot below has a link that opens a new bot with its prompt ready to send. Op
 | [Bot last30days](bot-last30days/) | Tells you what people actually said about a topic in the last 30 days — X, web, Hacker News, GitHub, Polymarket, arXiv — ranked by real engagement, written up as a short honest brief. No keys to configure. | [Create bot](https://ql.app/l/TGU3iySl) |
 | [Design Bot](bot-design/) | A design-and-review board that works both ways with Figma: start a design here (shapes, text, images, groups, auto layout, gradients, shadows) and push it into Figma as native editable layers, or pull a Figma file in, draw on it, and push that back too. PMs and designers draw, pin comments, resolve together, and push threads back into Figma as native comments. | [Prompt](bot-design/PROMPT.md) (launch link pending) |
 | [Bot Factory](bot-factory/) | A Play Store for a room's bots, pinned as the room's Room TV: every bot gets a card with a 3D robot, and anyone can get their own copy in one click. Ships with five seed bots. | [Prompt](bot-factory/PROMPT.md) (launch link pending) |
+| [Superset Installer Bot](bot-superset-installer/) | Connects an existing Superset instance, proposes BI wiki context, creates a refresh-token query helper, and verifies dashboard access. | [Create bot](https://ql.app/l/BHwnFefK) |
 
 ## What is in each bot directory
 
