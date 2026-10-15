@@ -1,0 +1,40 @@
+{
+ "title": "Product Sync Board",
+ "brand": {"name": "Example Co", "logo_url": ""},
+ "meeting": {
+  "title": "Weekly product sync",
+  "date": "2026-10-07",
+  "doc_url": "https://example.com/meeting-notes"
+ },
+ "members": [
+  {"id": "u-ava", "name": "Ava Chen", "short": "Ava", "initials": "AC", "color": "#2563EB"},
+  {"id": "u-ben", "name": "Ben Okafor", "short": "Ben", "initials": "BO", "color": "#7C3AED"},
+  {"id": "u-chloe", "name": "Chloe Martin", "short": "Chloe", "initials": "CM", "color": "#059669"},
+  {"id": "u-dev", "name": "Dev Patel", "short": "Dev", "initials": "DP", "color": "#D97706"}
+ ],
+ "workstreams": ["Onboarding", "Billing", "Mobile", "Launch", "General"],
+ "cards": [
+  {"id": "c01", "title": "Fix signup drop-off on the plan step", "description": "Users abandon at plan selection; simplify to two plans and add a skip option.", "status": "in_progress", "priority": "p0", "workstream": "Onboarding", "assignees": ["u-ava"], "due": "2026-10-09", "order": 0, "comments": [], "source": "\"We lose a third of signups on the plan step. Ava, can you ship the two-plan version by Thursday?\"", "created_at": "2026-10-07T09:00:00+00:00", "updated_at": "2026-10-07T09:00:00+00:00"},
+  {"id": "c02", "title": "Draft launch announcement", "description": "Blog post plus social copy for the mobile launch.", "status": "todo", "priority": "p1", "workstream": "Launch", "assignees": ["u-chloe"], "due": "2026-10-10", "order": 0, "comments": [], "source": "\"Chloe owns the announcement draft, first version by Friday.\"", "created_at": "2026-10-07T09:00:00+00:00", "updated_at": "2026-10-07T09:00:00+00:00"},
+  {"id": "c03", "title": "Invoice PDF shows wrong tax line for EU customers", "description": "VAT line duplicated on invoices for EU accounts.", "status": "blocked", "priority": "p0", "workstream": "Billing", "assignees": ["u-ben"], "due": "2026-10-08", "order": 0, "comments": [{"id": "a1b2c3d4", "author": "Ben", "text": "Waiting on the tax vendor to confirm the rate table.", "at": "2026-10-07T10:12:00+00:00"}], "source": "\"The EU invoices are wrong again. Ben is on it but blocked on the vendor.\"", "created_at": "2026-10-07T09:00:00+00:00", "updated_at": "2026-10-07T10:12:00+00:00"},
+  {"id": "c04", "title": "Push notification opt-in screen", "description": "Add a clear opt-in step after first login on mobile.", "status": "todo", "priority": "p1", "workstream": "Mobile", "assignees": ["u-dev"], "due": "", "order": 1, "comments": [], "source": "\"Dev, let's get the notification opt-in in before the launch build.\"", "created_at": "2026-10-07T09:00:00+00:00", "updated_at": "2026-10-07T09:00:00+00:00"},
+  {"id": "c05", "title": "Decide on pricing page copy", "description": "Agree the three value bullets for each plan.", "status": "todo", "priority": "p2", "workstream": "Billing", "assignees": ["u-chloe", "u-ava"], "due": "", "order": 2, "comments": [], "source": "\"We still need the pricing page copy; Chloe and Ava to pair on it.\"", "created_at": "2026-10-07T09:00:00+00:00", "updated_at": "2026-10-07T09:00:00+00:00"},
+  {"id": "c06", "title": "Crash on rotate in the settings screen", "description": "Reproducible on Android 15; fix landed in the last build.", "status": "done", "priority": "p1", "workstream": "Mobile", "assignees": ["u-dev"], "due": "2026-10-06", "order": 0, "comments": [], "source": "\"The rotate crash is fixed and shipped yesterday.\"", "created_at": "2026-10-07T09:00:00+00:00", "updated_at": "2026-10-07T09:00:00+00:00"},
+  {"id": "c07", "title": "Set up launch-day on-call rota", "description": "Two people per shift for the first 48 hours.", "status": "todo", "priority": "p1", "workstream": "Launch", "assignees": ["u-ben"], "due": "2026-10-13", "order": 3, "comments": [], "source": "\"Ben, can you put together the on-call rota for launch week?\"", "created_at": "2026-10-07T09:00:00+00:00", "updated_at": "2026-10-07T09:00:00+00:00"},
+  {"id": "c08", "title": "Welcome email A/B test readout", "description": "Share results of the two subject lines.", "status": "in_progress", "priority": "p2", "workstream": "Onboarding", "assignees": ["u-ava"], "due": "", "order": 1, "comments": [], "source": "\"Ava will share the welcome email test results next week.\"", "created_at": "2026-10-07T09:00:00+00:00", "updated_at": "2026-10-07T09:00:00+00:00"}
+ ],
+ "activity": [
+  {"at": "2026-10-07T09:00:00+00:00", "actor": "Bot", "text": "seeded 8 cards from Weekly product sync", "card_id": null}
+ ],
+ "decisions": [
+  "Launch date stays 2026-10-14.",
+  "Two plans only on the signup flow; the enterprise plan moves to a contact form."
+ ],
+ "open_questions": [
+  "Do we need a separate EU invoice template or just a corrected tax line?",
+  "Who covers on-call over the weekend?"
+ ],
+ "seeded_at": "2026-10-07T09:00:00+00:00",
+ "updated_at": "2026-10-07T10:12:00+00:00",
+ "rev": 1
+}

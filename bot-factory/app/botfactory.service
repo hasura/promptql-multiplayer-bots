@@ -1,0 +1,19 @@
+# Template systemd unit. setup.sh fills in @USER@ and @DIR@ and installs it as
+# /etc/systemd/system/botfactory.service. Optional overrides go in @DIR@/.env
+# (BF_* variables, never committed); PROMPTQL_* variables are not needed by the
+# server itself because every request acts with the visitor's own token.
+[Unit]
+Description=Bot Factory app (Room TV)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=@USER@
+WorkingDirectory=@DIR@
+EnvironmentFile=-@DIR@/.env
+ExecStart=/usr/bin/python3 @DIR@/server.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

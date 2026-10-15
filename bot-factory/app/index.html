@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__BF_APP_TITLE__</title><link rel="icon" href="__BF_FAVICON__">
+<style>
+:root{--g:__BF_PRIMARY__;--gd:__BF_PRIMARY_DARK__;--acc:__BF_ACCENT__;--mid:__BF_HERO_MID__;--ink:#202124;--mut:#5f6368;--bd:#e3e6ea;--bg:#f6f8fa}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Google Sans",Roboto,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.45;color:var(--ink);background:var(--bg)}
+header{background:#fff;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5}
+.bar{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:21px;letter-spacing:-.2px}
+.mark{width:38px;height:38px;border-radius:11px;background:conic-gradient(from 210deg,var(--g),var(--mid),var(--acc),var(--g));display:grid;place-items:center;font-size:19px}
+.search{flex:1;min-width:220px;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--bd);border-radius:24px;padding:9px 16px}
+.search input{border:0;outline:0;background:transparent;font:inherit;width:100%}
+.me{color:var(--mut);font-size:14px;white-space:nowrap}
+main{max-width:1240px;margin:0 auto;padding:22px 20px 40px}
+.hero{background:linear-gradient(120deg,var(--g),var(--mid) 60%,var(--acc));color:#fff;border-radius:20px;padding:22px 26px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.hero h1{margin:0 0 4px;font-size:24px}
+.hero p{margin:0;opacity:.92;max-width:680px}
+.stat{background:rgba(255,255,255,.16);border-radius:14px;padding:10px 16px;text-align:center;min-width:110px}
+.stat b{display:block;font-size:24px}
+h2{font-size:18px;margin:28px 2px 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.card{background:#fff;border:1px solid var(--bd);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;transition:box-shadow .15s,transform .15s}
+.card:hover{box-shadow:0 8px 24px rgba(0,0,0,.08);transform:translateY(-2px)}
+.top{display:flex;gap:12px;align-items:center}
+.icon{width:58px;height:58px;border-radius:15px;display:grid;place-items:center;font-size:30px;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05)}
+.name{font-weight:600;font-size:16px}
+.by{color:var(--mut);font-size:13px}
+.desc{color:#3c4043;font-size:14px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:61px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:3px 9px;border-radius:12px;background:#eef3f8;color:#3c4043}
+.chip.need{background:#e8f0fe;color:#1a56c4}
+.chip.warn{background:#fff4e5;color:#8a4b00}
+.foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:4px}
+.gets{color:var(--mut);font-size:13px}
+.btn{background:var(--g);color:#fff;border:0;border-radius:20px;padding:9px 24px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--gd)}
+.btn:disabled{background:#c4cbd1;cursor:default}
+.ghost{background:transparent;color:var(--g);border:1px solid var(--bd);border-radius:20px;padding:9px 20px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none;display:inline-block}
+.card.off{cursor:default;opacity:.75}
+.card.off:hover{transform:none;box-shadow:none}
+.empty,.note{color:var(--mut)}
+.note{font-size:13px;margin-top:6px}
+.ov{position:fixed;inset:0;background:rgba(32,33,36,.45);display:none;align-items:center;justify-content:center;z-index:20;padding:16px}
+.ov.on{display:flex}
+.sheet{background:#fff;border-radius:22px;max-width:640px;width:100%;max-height:92vh;overflow:auto;padding:24px;position:relative}
+.x{position:absolute;right:14px;top:10px;border:0;background:none;font-size:24px;cursor:pointer;color:var(--mut)}
+.shead{display:flex;gap:16px;align-items:center;margin-bottom:14px}
+.shead .icon{width:76px;height:76px;font-size:40px;border-radius:18px}
+.shead .name{font-size:22px}
+.sec{margin:16px 0}
+.sec h4{margin:0 0 6px;font-size:14px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+.links{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+select{width:100%;padding:11px 12px;border:1px solid var(--bd);border-radius:12px;font:inherit;background:#fff}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.ok{background:#e6f4ea;border-radius:12px;padding:12px 14px;margin:14px 0 10px}
+.err{background:#fce8e6;color:#a50e0e;border-radius:12px;padding:12px 14px;margin-top:14px;word-break:break-word}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid #cfe7dc;border-top-color:var(--g);border-radius:50%;animation:s 1s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+.status{margin-top:14px}
+.brandlogo{height:26px;width:auto;max-width:200px;display:block}
+.sep{width:1px;height:24px;background:#d0d4d9;margin:0 2px}
+.stage{position:relative;height:150px;margin:-4px -4px 2px;border-radius:14px;overflow:hidden;background:radial-gradient(120% 95% at 50% 100%,color-mix(in srgb,var(--c) 55%,#fff) 0%,color-mix(in srgb,var(--c) 16%,#fff) 72%)}
+.stage.big{height:220px;margin:0 0 14px}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%}
+.stage .fb{position:absolute;inset:0;display:grid;place-items:center;font-size:56px;transition:opacity .3s}
+.stage.live .fb{opacity:0}
+
+.opt{font-weight:400;font-size:12px;color:var(--mut);background:#f1f3f4;border-radius:10px;padding:2px 8px;margin-left:6px;vertical-align:2px}
+.ask{width:100%;min-height:52px;border:1.5px solid var(--bd);border-radius:14px;padding:12px 14px;font:15px/1.45 inherit;font-family:inherit;resize:none;outline:0;transition:border-color .15s,box-shadow .15s;box-sizing:border-box}
+.ask:focus,.ptext:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(1,135,95,.12)}
+.msgcard{margin-top:14px;border:1px solid var(--bd);border-radius:16px;background:#fafbfc;overflow:hidden}
+.mhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px 10px 14px;border-bottom:1px solid var(--bd);background:#fff}
+.mtitle{font-weight:600;font-size:14px}
+.seg{display:inline-flex;background:#f1f3f4;border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;font:600 13px inherit;font-family:inherit;color:var(--mut);padding:5px 12px;border-radius:8px;cursor:pointer}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.pview{position:relative;padding:12px 16px;font-size:14px;line-height:1.55;color:#3c4043;max-height:210px;overflow:hidden}
+.pview.full{max-height:none}
+.pview p{margin:0 0 2px}.pview .gap{height:8px}
+.pview ol,.pview ul{margin:2px 0 4px;padding-left:22px}.pview li{margin:2px 0}
+.pview code{background:#eef1f4;border-radius:5px;padding:1px 5px;font-size:12.5px}
+.pview .fade{position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(transparent,#fafbfc 70%);display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px}
+.pview.full .fade{display:none}
+.more{border:1px solid var(--bd);background:#fff;border-radius:16px;padding:4px 14px;font:600 12.5px inherit;font-family:inherit;color:var(--g);cursor:pointer}
+.wchip{display:inline-flex;align-items:center;gap:4px;background:#e6f4ea;color:#0b6b48;border-radius:8px;padding:0 7px;font-weight:600;font-size:13px;white-space:nowrap}
+.mchip{background:#e8f0fe;color:#1a56c4;border-radius:8px;padding:0 6px;font-weight:600}
+.ptext{display:block;width:100%;min-height:200px;border:0;border-radius:0;padding:12px 16px;font:14px/1.55 inherit;font-family:inherit;background:#fff;resize:none;outline:0;box-sizing:border-box}
+.mfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid var(--bd);font-size:12.5px;color:var(--mut);background:#fff}
+.mfoot a{color:var(--g);font-weight:600;text-decoration:none;white-space:nowrap}
+</style><link rel="modulepreload" href="static/three.module.min.js"><link rel="modulepreload" href="static/robot.js"><link rel="modulepreload" href="static/robots3d.js"></head>
+<body>
+<header><div class="bar">
+  <div class="logo">__BF_LOGO_BLOCK__<span>__BF_APP_TITLE__</span></div>
+  <label class="search">🔎<input id="q" placeholder="Search bots" oninput="render()"></label>
+  <div class="me" id="me"></div>
+</div></header>
+<main>
+  <div class="hero">
+    <div><h1>Get a bot in one click</h1>
+      <p>Every bot in <b>#<span id="room">…</span></b>. Each one is built fresh from its recipe (a wiki page or a seeded recipe), so your copy starts clean and keeps nothing from anyone else's chat.</p></div>
+    <div style="display:flex;gap:10px"><div class="stat"><b id="nbots">–</b>bots</div><div class="stat"><b id="ngets">–</b>gets</div></div>
+  </div>
+  <h2>Available bots</h2>
+  <div id="seedbar"></div>
+  <div class="grid" id="grid"><p class="empty"><span class="spin"></span>Loading…</p></div>
+  <div id="missingWrap" style="display:none">
+    <h2>Not in the wiki yet</h2>
+    <p class="note" style="margin-top:-6px">These bots are in the room but don't have a wiki page yet, so nobody can get them. Write the page and the bot appears above.</p>
+    <div class="grid" id="missing" style="margin-top:12px"></div>
+  </div>
+</main>
+<div class="ov" id="ov" onclick="if(event.target===this)closeSheet()"><div class="sheet"><button class="x" onclick="closeSheet()">×</button><div id="sheet"></div></div></div>
+<script>
+const $=s=>document.querySelector(s);
+let CAT={bots:[],missing:[],gets:{}},ROOMS=null,ANON=false;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const find=id=>CAT.bots.find(b=>b.wiki_id===id);
+const stage=(b,c)=>`<div class="stage ${c||""}" style="--c:${b.color}"><span class="fb">${b.emoji}</span><canvas class="bot3d" data-name="${esc(b.name)}" data-emoji="${esc(b.emoji)}"></canvas></div>`;
+const nGets=b=>(CAT.gets||{})[b.wiki_id]||0;
+
+let TRIES=0,ROOMS_KICKED=false;
+const kickRooms=()=>{if(!ANON&&!ROOMS_KICKED){ROOMS_KICKED=true;loadRooms().catch(()=>{ROOMS_KICKED=false;});}};
+async function load(force){
+  if(window.__CAT&&!force){CAT=window.__CAT;window.__CAT=null;ANON=false;render();kickRooms();}
+  try{
+    const r=await fetch("api/catalog"+(force?"?refresh=1":""),{cache:"no-store"});const j=await r.json();
+    const first=!(CAT.bots||[]).length&&!(CAT.missing||[]).length;
+    const changed=JSON.stringify([j.bots,j.missing,j.gets,j.me])!==JSON.stringify([CAT.bots,CAT.missing,CAT.gets,CAT.me]);
+    CAT=j;ANON=!!CAT.anonymous;kickRooms();
+    if(first||changed||force)render();
+    if(CAT.stale&&TRIES++<8)setTimeout(()=>load(),4000);
+  }catch(e){ANON=!!CAT.anonymous;render();}
+}
+function chips(b){
+  return (b.needs||[]).map(n=>`<span class="chip need">🔌 ${esc(n)}</span>`).join("")+
+         (b.tags||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join("")+
+         (b.depends_on_bot_artifacts?`<span class="chip warn" title="Its wiki page still links to artifacts that live in another bot">⚠️ Not fully in the wiki</span>`:"");
+}
+function card(b){
+  const n=nGets(b);
+  return `<div class="card" onclick="openBot('${b.wiki_id}')">
+    ${stage(b)}
+    <div class="top"><div class="icon" style="background:${b.color}">${b.emoji}</div>
+      <div><div class="name">${esc(b.name)}</div><div class="by">by ${esc(b.owner)}</div></div></div>
+    <div class="desc">${esc(b.definition)}</div>
+    <div class="chips">${chips(b)}</div>
+    <div class="foot"><span class="gets">⬇ ${n} get${n==1?"":"s"}</span>
+      <button class="btn" ${ANON?"disabled":""} onclick="event.stopPropagation();startGet('${b.wiki_id}')">${ANON?"Open to get":"Get"}</button></div>
+  </div>`;
+}
+function render(){setTimeout(()=>window.mount3d&&window.mount3d());
+  const q=$("#q").value.toLowerCase().trim();
+  $("#room").textContent=CAT.room_name||"this room";
+  $("#me").textContent=CAT.me?("Hi, "+CAT.me.split(" ")[0]+" 👋"):"";
+  $("#nbots").textContent=CAT.bots.length;
+  $("#ngets").textContent=Object.values(CAT.gets||{}).reduce((a,b)=>a+b,0);
+  const m=b=>!q||[b.name,b.definition,b.owner,(b.aliases||[]).join(" "),(b.needs||[]).join(" ")].join(" ").toLowerCase().includes(q);
+  const bots=CAT.bots.filter(m).sort((a,b)=>nGets(b)-nGets(a));
+  $("#grid").innerHTML=bots.map(card).join("")||`<p class="empty">${q?"No bots match your search.":"No bots with wiki pages in this room yet."}</p>`;
+  const miss=CAT.missing||[];
+  $("#missingWrap").style.display=miss.length?"block":"none";
+  $("#missing").innerHTML=miss.map(b=>`<div class="card off"><div class="top"><div class="icon" style="background:#eceff1">🤖</div>
+    <div><div class="name">${esc(b.name)}</div><div class="by">by ${esc(b.owner)}</div></div></div>
+    <div class="foot">${b.source_url?`<a class="ghost" href="${b.source_url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">View bot</a>`:""}
+    <button class="btn" disabled>No wiki page</button></div></div>`).join("");
+}
+function showSheet(h){$("#sheet").innerHTML=h;setTimeout(()=>window.mount3d&&window.mount3d());$("#ov").classList.add("on");}
+function closeSheet(){$("#ov").classList.remove("on");}
+function head(b,btn){
+  return `${stage(b,"big")}<div class="shead"><div class="icon" style="background:${b.color}">${b.emoji}</div>
+    <div style="flex:1"><div class="name">${esc(b.name)}</div><div class="by">by ${esc(b.owner)} · ⬇ ${nGets(b)} gets</div></div>${btn||""}</div>`;
+}
+function openBot(id){
+  const b=find(id);if(!b)return;
+  showSheet(head(b,`<button class="btn" ${ANON?"disabled":""} onclick="startGet('${id}')">${ANON?"Open to get":"Get"}</button>`)+
+    `<div class="chips">${chips(b)}</div>
+    <div class="sec"><h4>About</h4>${esc(b.definition)}</div>
+    ${b.details?`<div class="sec"><h4>How it works</h4>${esc(b.details)}${b.details.length>=900?"…":""}</div>`:""}
+    ${(b.aliases||[]).length?`<div class="sec"><h4>Ask for it with</h4>${b.aliases.map(a=>`<span class="chip">“${esc(a)}”</span>`).join(" ")}</div>`:""}
+    ${b.depends_on_bot_artifacts?`<div class="sec note">⚠️ The wiki page still links to artifacts that live in another bot. Your copy can use them, but the page isn't fully self-contained yet.</div>`:""}
+    <div class="sec"><h4>Recipe</h4><div class="links">
+      ${b.wiki_url?`<a class="ghost" href="${b.wiki_url}" target="_blank" rel="noopener">📖 Wiki page: ${esc(b.wiki_title)}</a>`:""}
+      ${b.source_url?`<a class="ghost" href="${b.source_url}" target="_blank" rel="noopener">See the original bot</a>`:""}</div></div>`);
+}
+let ROOMS_P=null;
+function loadRooms(){
+  if(!ROOMS_P){
+    ROOMS_P=fetch("api/rooms",{cache:"no-store"}).then(async r=>{
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok||!Array.isArray(j.rooms))throw new Error(j.error||("HTTP "+r.status));
+      return j.rooms;
+    }).catch(e=>{ROOMS_P=null;throw e;});
+  }
+  return ROOMS_P;
+}
+async function fillRooms(){
+  const sel=$("#roomSel"),note=$("#roomNote");if(!sel)return;
+  sel.disabled=true;sel.innerHTML='<option value="">Loading your rooms…</option>';note.textContent="";
+  const base='<option value="">🔒 No room (private to you)</option>';
+  try{
+    const rooms=await loadRooms();
+    if(!$("#roomSel"))return;
+    sel.innerHTML=base;
+    const add=(label,list)=>{if(!list.length)return;const g=document.createElement("optgroup");g.label=label;
+      list.forEach(r=>{const o=document.createElement("option");o.value=r.room_id;o.textContent=(r.visibility==="private"?"🔐 ":"# ")+r.name;g.appendChild(o);});
+      sel.appendChild(g);};
+    add("Public rooms",rooms.filter(r=>r.visibility!=="private"));
+    add("Your private rooms",rooms.filter(r=>r.visibility==="private"));
+    note.textContent=`${rooms.length} rooms you can add bots to.`;
+  }catch(e){
+    if(!$("#roomSel"))return;
+    sel.innerHTML=base;
+    note.innerHTML=`Couldn't load your rooms (${esc(e.message).slice(0,160)}). <a href="#" onclick="fillRooms();return false">Try again</a>`;
+  }
+  sel.disabled=false;
+}
+
+const AK=id=>"bf-ask-"+id;
+function askFor(b){try{return localStorage.getItem(AK(b.wiki_id))||"";}catch(e){return "";}}
+function saveAsk(id,v){try{localStorage.setItem(AK(id),v);}catch(e){}}
+function grow(el){if(!el)return;el.style.height="auto";el.style.height=Math.min(el.scrollHeight+2,440)+"px";}
+function mdLite(s){
+  const inl=t=>esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\[\[(.+?)\]\]/g,'<span class="wchip">📖 $1</span>')
+    .replace(/`([^`]+)`/g,"<code>$1</code>").replace(/&lt;agent_mention ?\/&gt;/g,'<span class="mchip">@__BF_BOT_NAME__</span>');
+  const out=[];let list=null;
+  for(const raw of String(s||"").split("\n")){
+    const l=raw.replace(/\s+$/,"");
+    const m=l.match(/^\s*(\d+)[.)]\s+(.*)$/),u=l.match(/^\s*[-*•]\s+(.*)$/);
+    if(m||u){const tag=m?"ol":"ul";if(!list||list.tag!==tag){list={tag,items:[]};out.push(list);}list.items.push(inl(m?m[2]:u[1]));continue;}
+    list=null;out.push(l.trim()?{p:inl(l)}:{gap:1});
+  }
+  return out.map(x=>x.tag?`<${x.tag}>${x.items.map(i=>`<li>${i}</li>`).join("")}</${x.tag}>`:x.gap?'<div class="gap"></div>':`<p>${x.p}</p>`).join("");
+}
+function renderPrompt(){
+  const v=$("#pview"),t=$("#prompt");if(!v||!t)return;
+  v.classList.remove("full");
+  v.innerHTML=mdLite(t.value)+'<div class="fade"><button class="more" onclick="this.closest(\'.pview\').classList.add(\'full\')">Show full message</button></div>';
+  if(v.scrollHeight<=v.clientHeight+4)v.classList.add("full");
+}
+function pmode(m){
+  const t=$("#prompt"),v=$("#pview");if(!t||!v)return;
+  $("#tabP").classList.toggle("on",m==="p");$("#tabE").classList.toggle("on",m==="e");
+  if(m==="e"){v.style.display="none";t.style.display="block";grow(t);t.focus();}
+  else{t.style.display="none";v.style.display="block";renderPrompt();}
+}
+function fullMsg(){
+  const base=(($("#prompt")||{}).value||"").replace(/\s+$/,""),ask=(($("#ask")||{}).value||"").trim();
+  return ask?base+"\n\nWhat I'd like help with first: "+ask:base;
+}
+const PK=id=>"bf-prompt-"+id;
+function promptFor(b){try{return localStorage.getItem(PK(b.wiki_id))||b.prompt||"";}catch(e){return b.prompt||"";}}
+function savePrompt(id,v){try{localStorage.setItem(PK(id),v);}catch(e){}}
+function resetPrompt(id){const b=find(id);if(!b)return;try{localStorage.removeItem(PK(id));}catch(e){}$("#prompt").value=b.prompt||"";renderPrompt();grow($("#prompt"));}
+// Opened inside the click so popup blockers allow it; pointed at the new bot once it exists.
+function pendingTab(name){
+  let w=null;try{w=window.open("","_blank");}catch(e){}
+  if(w){try{w.document.write(`<title>Building your bot…</title><body style="margin:0;height:100vh;display:grid;place-items:center;font:16px system-ui;color:#263238;background:#f6f8fa"><div style="text-align:center"><div style="font-size:46px">🤖</div><p>Building your <b>${esc(name)}</b> bot from the wiki…</p><p style="color:#78909c">You'll land in it in a moment.</p></div></body>`);w.document.close();}catch(e){}}
+  return w;
+}
+function goTo(tab,url){
+  if(tab&&!tab.closed){try{tab.opener=null;}catch(e){}tab.location.href=url;return "Opened it in a new tab.";}
+  try{window.top.location.href=url;}catch(e){}
+  return "If it didn't open on its own, use the button below.";
+}
+async function startGet(id){
+  const b=find(id);if(!b||ANON)return;
+  showSheet(head(b)+`<h3 style="margin:6px 0">Where should your bot live?</h3>
+    <p class="note" style="margin-top:0">It's built fresh from the wiki page <b>${esc(b.wiki_title)}</b>. A bot in a room is visible to everyone in that room.</p>
+    <select id="roomSel" disabled><option value="">Loading your rooms…</option></select><p class="note" id="roomNote" style="margin:6px 0 0"></p>
+    <h3 style="margin:18px 0 8px">What should it help you with? <span class="opt">optional</span></h3>
+    <textarea id="ask" class="ask" rows="2" placeholder="Tell it what you're working on and it'll start right there. Leave blank and it'll introduce itself first." oninput="saveAsk('${id}',this.value);grow(this)">${esc(askFor(b))}</textarea>
+    <div class="msgcard">
+      <div class="mhead"><span class="mtitle">💬 The message your bot starts with</span>
+        <div class="seg"><button id="tabP" class="on" onclick="pmode('p')">Preview</button><button id="tabE" onclick="pmode('e')">Edit</button></div></div>
+      <div id="pview" class="pview"></div>
+      <textarea id="prompt" class="ptext" style="display:none" oninput="savePrompt('${id}',this.value);grow(this)">${esc(promptFor(b))}</textarea>
+      <div class="mfoot"><span>Its recipe is the wiki page <span class="wchip">📖 ${esc(b.wiki_title)}</span>. Keep that link in.</span><a href="#" onclick="resetPrompt('${id}');return false">↺ Reset</a></div>
+    </div>
+    <div class="actions"><button class="ghost" onclick="closeSheet()">Cancel</button><button class="btn" id="go" onclick="doGet('${id}')">Create my bot</button></div>
+    <div class="status" id="status"></div>`);
+  renderPrompt();grow($("#ask"));
+  fillRooms();
+}
+async function doGet(id){
+  const go=$("#go");go.disabled=true;const tab=pendingTab((find(id)||{}).name||"new");if($("#prompt"))$("#prompt").disabled=true;if($("#ask"))$("#ask").disabled=true;
+  $("#status").innerHTML='<span class="spin"></span>Building your bot from the wiki…';
+  const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";
+  try{
+    const r=await fetch("api/get",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({wiki_id:id,room_id:$("#roomSel").value||null,timezone:tz,message:fullMsg()})});
+    const j=await r.json();
+    if(!r.ok)throw new Error(j.error||("HTTP "+r.status));
+    CAT.gets=j.gets||CAT.gets;render();
+    if(j.mode==="manual"){if(tab)try{tab.close();}catch(_){}
+      const where=j.room_name?`in <b>#${esc(j.room_name)}</b>`:`with <b>no room</b> (private to you)`;
+      $("#status").innerHTML=`<div class="ok">Almost there. Apps can't create bots on your behalf yet, so this takes two quick steps:
+        <ol style="margin:8px 0 0 18px;padding:0"><li>In PromptQL, start a new bot ${where}.</li>
+        <li>Type <b>@${esc(j.bot_name)}</b>, pick it from the list, then paste the message below and send it.</li></ol></div>
+        <textarea id="kick" readonly style="width:100%;height:170px;border:1px solid var(--bd);border-radius:12px;padding:10px;font:13px/1.4 ui-monospace,monospace">${esc(j.message)}</textarea>
+        <div class="actions"><button class="btn" onclick="copyKick(this)">Copy message</button></div>`;
+      go.style.display="none";return;
+    }
+    const how=goTo(tab,j.url);
+    $("#status").innerHTML=`<div class="ok">✅ <b>${esc(j.title)}</b> is ready ${j.room_name?"in #"+esc(j.room_name):"(private to you)"}. ${how} It's reading its wiki page now, so give it a minute to introduce itself.</div>
+      <div class="actions"><a class="btn" href="${j.url}" target="_blank" rel="noopener">Open my bot →</a></div>`;
+    go.style.display="none";
+  }catch(e){if(tab)try{tab.close();}catch(_){}if($("#prompt"))$("#prompt").disabled=false;if($("#ask"))$("#ask").disabled=false;$("#status").innerHTML=`<div class="err">Couldn't create the bot: ${esc(e.message)}</div>`;go.disabled=false;}
+}
+async function copyKick(btn){
+  const t=$("#kick");t.focus();t.select();
+  let ok=false;try{await navigator.clipboard.writeText(t.value);ok=true;}catch(e){try{ok=document.execCommand("copy");}catch(_){}}
+  btn.textContent=ok?"Copied ✓":"Press Ctrl/⌘+C";
+}
+load();setInterval(()=>{if(!$("#ov").classList.contains("on"))load();},60000);
+</script>
+<script type="module">import("./static/robots3d.js").then(m=>{window.mount3d=m.mount;m.mount();}).catch(e=>console.warn("3D off",e));</script>
+<script>
+// Admin helper: create the seeded template bots in the store room (POST api/admin/bootstrap, runs as you).
+function seedBar(){try{
+  const el=document.getElementById("seedbar"); if(!el||typeof CAT==="undefined"||!CAT) return;
+  const todo=(CAT.bots||[]).filter(b=>b.seed&&!b.thread_id);
+  if(!todo.length||(typeof ANON!=="undefined"&&ANON)){el.innerHTML="";return;}
+  el.innerHTML=`<div class="note" style="margin:14px 0;padding:12px 14px;background:#fff;border:1px solid var(--bd);border-radius:12px">
+    🌱 ${todo.length} seeded bot${todo.length>1?"s have":" has"} no template bot in this room yet.
+    <button class="btn" style="margin-left:8px" onclick="runSeed(this)">Seed template bots</button></div>`;
+}catch(e){}}
+async function runSeed(btn){btn.disabled=true;btn.textContent="Creating…";
+  try{const r=await fetch("api/admin/bootstrap",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+    const j=await r.json(); if(!r.ok) throw new Error(j.error||r.status);
+    btn.textContent="Done: "+j.results.filter(x=>x.status==="created").length+" created"; setTimeout(()=>location.reload(),1500);
+  }catch(e){btn.disabled=false;btn.textContent="Retry";alert("Seeding failed: "+e.message);}}
+setInterval(seedBar,2000);setTimeout(seedBar,300);
+</script>
+</body></html>

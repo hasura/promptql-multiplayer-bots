@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "steps": [
+    {
+      "type": "python",
+      "file": "superset_query.py",
+      "arguments": [
+        "--endpoint",
+        "/dashboard/",
+        "--paginate",
+        "--artifact",
+        "superset_dashboards"
+      ]
+    }
+  ]
+}

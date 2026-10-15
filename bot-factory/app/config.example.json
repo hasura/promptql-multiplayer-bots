@@ -1,0 +1,14 @@
+{
+  "_comment": "Copy to config.json and fill in. BF_* env vars override any key (see DEPLOY.md). api_url may be left empty: it falls back to $PROMPTQL_PLATFORM_API_URL. The hosting bot ($PROMPTQL_THREAD_ID) is always excluded from the store.",
+  "api_url": "",
+  "app_base_url": "https://<your-promptql-host>/project/<project-slug>",
+  "project_id": "<project-uuid>",
+  "room_id": "<store-room-uuid>",
+  "room_name": "<store-room-name>",
+  "index_page_title": "Skills Index",
+  "bot_name": "PromptQL",
+  "timezone": "UTC",
+  "exclude_thread_ids": [],
+  "admin_user_ids": [],
+  "port": 8090
+}

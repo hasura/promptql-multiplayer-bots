@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>Camera</title>
+<style>
+  :root { color-scheme: dark; --accent:#ffd60a; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; background:#000; color:#f2f2f7; font:15px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
+  body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; }
+  h1 { font-size:17px; margin:0; font-weight:600; }
+  #who { color:#8e8e93; font-size:13px; }
+  main { max-width:720px; margin:0 auto; }
+  .viewer { position:relative; width:100%; aspect-ratio:3/4; max-height:70vh; background:#111; overflow:hidden; border-radius:14px; }
+  @media (min-width:700px){ .viewer { aspect-ratio:4/3; } }
+  video { width:100%; height:100%; object-fit:cover; display:block; }
+  video.mirror { transform: scaleX(-1); }
+  [hidden] { display:none !important; }
+  #placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:24px; color:#c7c7cc; }
+  #placeholder .big { font-size:44px; }
+  #flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition:opacity .25s; }
+  #flash.on { opacity:.85; transition:none; }
+  .controls { display:flex; align-items:center; justify-content:space-around; padding:18px 8px 8px; }
+  .round { width:52px; height:52px; border-radius:50%; border:none; background:#2c2c2e; color:#fff; font-size:22px; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
+  .round:disabled { opacity:.35; }
+  #shutter { width:76px; height:76px; border-radius:50%; border:4px solid #fff; background:#fff; box-shadow: inset 0 0 0 4px #000; cursor:pointer; transition: transform .08s; }
+  #shutter:active { transform: scale(.92); }
+  #shutter:disabled { opacity:.35; }
+  .vh { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
+  .hint { text-align:center; color:#8e8e93; font-size:12px; margin:2px 0 6px; }
+  .secondary { display:flex; flex-wrap:wrap; justify-content:center; gap:8px 18px; padding:6px 12px 4px; }
+  .linkbtn { background:none; border:none; color:var(--accent); font:inherit; cursor:pointer; padding:6px 0; text-decoration:none; position:relative; }
+  .linkbtn[aria-disabled=true] { opacity:.4; pointer-events:none; }
+  #status { min-height:20px; text-align:center; margin:4px 12px; color:#8e8e93; font-size:13px; }
+  #status.err { color:#ff6961; }
+  h2 { font-size:15px; font-weight:600; margin:18px 16px 8px; color:#c7c7cc; }
+  #grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(100px,1fr)); gap:3px; padding:0 3px 40px; }
+  #grid button { padding:0; border:none; background:#1c1c1e; aspect-ratio:1; cursor:pointer; overflow:hidden; }
+  #grid img { width:100%; height:100%; object-fit:cover; display:block; }
+  .empty { color:#636366; text-align:center; padding:24px; grid-column:1/-1; }
+  #lightbox { position:fixed; inset:0; background:rgba(0,0,0,.96); display:flex; flex-direction:column; z-index:10; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  #lightbox[hidden] { display:none; }
+  #lbImg { flex:1; min-height:0; width:100%; object-fit:contain; }
+  #lbMeta { text-align:center; color:#8e8e93; font-size:12px; padding:6px; }
+  .lbActions { display:flex; justify-content:space-around; padding:10px 8px 16px; }
+  .lbActions button, .lbActions a { background:none; border:none; color:var(--accent); font:inherit; font-size:16px; cursor:pointer; text-decoration:none; padding:8px 10px; }
+  .lbActions .danger { color:#ff453a; }
+</style>
+</head>
+<body>
+<header><h1>📷 Camera</h1><span id="who"></span></header>
+<main>
+  <section class="viewer">
+    <video id="video" playsinline muted autoplay></video>
+    <div id="placeholder">
+      <div class="big">📷</div>
+      <div id="phText">Tap <b>Start live camera</b>, or use the native camera button below.</div>
+    </div>
+    <div id="flash"></div>
+  </section>
+
+  <div class="controls">
+    <button class="round" id="flip" title="Switch front/back camera" disabled>🔄</button>
+    <button id="shutter" aria-label="Take photo" disabled></button>
+    <label class="round" id="nativeBtn" title="Open the iPhone camera">📱
+      <input type="file" accept="image/*" capture="environment" id="nativeInput" class="vh">
+    </label>
+  </div>
+  <div class="hint">🔄 flip · ⚪ shutter (live) · 📱 native iPhone camera</div>
+
+  <div class="secondary">
+    <button class="linkbtn" id="startBtn">Start live camera</button>
+    <label class="linkbtn" id="libBtn">Upload from library
+      <input type="file" accept="image/*" multiple id="libraryInput" class="vh">
+    </label>
+    <a class="linkbtn" id="newTab" target="_blank" rel="noopener" href="/">Open full screen ↗</a>
+  </div>
+  <p id="status"></p>
+
+  <h2>Photos <span id="count"></span></h2>
+  <div id="grid"></div>
+</main>
+
+<div id="lightbox" hidden>
+  <img id="lbImg" alt="">
+  <div id="lbMeta"></div>
+  <div class="lbActions">
+    <button id="lbShare">Save / Share</button>
+    <a id="lbDownload" download>Download</a>
+    <button id="lbDelete" class="danger">Delete</button>
+    <button id="lbClose">Close</button>
+  </div>
+</div>
+<canvas id="canvas" hidden></canvas>
+
+<script>
+const $ = id => document.getElementById(id);
+const video = $('video'), canvas = $('canvas');
+let me = { anonymous: true }, stream = null, facing = 'environment', current = null, currentBlob = null;
+
+function setStatus(t, err) { $('status').textContent = t || ''; $('status').className = err ? 'err' : ''; }
+
+async function loadMe() {
+  try { me = await (await fetch('/api/me')).json(); } catch { me = { anonymous: true }; }
+  if (me.anonymous) {
+    $('who').textContent = 'Open in PromptQL to take photos';
+    ['startBtn','nativeInput','libraryInput'].forEach(id => $(id).disabled = true);
+    ['nativeBtn','libBtn','startBtn'].forEach(id => $(id).setAttribute('aria-disabled','true'));
+  } else {
+    $('who').textContent = me.display_name || '';
+  }
+}
+
+function stopCamera() {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null; video.srcObject = null;
+  $('shutter').disabled = true; $('flip').disabled = true;
+}
+
+function explain(e) {
+  if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError'))
+    return 'Live camera blocked in this embedded view. Tap “Open full screen ↗”, or use 📱 for the native iPhone camera.';
+  if (e && (e.name === 'NotFoundError' || e.name === 'OverconstrainedError')) return 'No camera found on this device.';
+  if (e && e.name === 'NotReadableError') return 'Camera is busy in another app.';
+  return 'Camera error: ' + (e && e.message || e);
+}
+
+async function startCamera() {
+  if (me.anonymous) return;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    $('phText').textContent = 'Live camera not supported here — use 📱 for the native iPhone camera.';
+    return;
+  }
+  stopCamera();
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: { ideal: facing }, width: { ideal: 4032 }, height: { ideal: 3024 } }
+    });
+    video.srcObject = stream;
+    await video.play().catch(() => {});
+    video.classList.toggle('mirror', facing === 'user');
+    $('placeholder').hidden = true;
+    $('shutter').disabled = false; $('flip').disabled = false;
+    $('startBtn').textContent = 'Restart camera';
+    setStatus('');
+  } catch (e) {
+    $('placeholder').hidden = false;
+    $('phText').textContent = explain(e);
+  }
+}
+
+function flash() { const f = $('flash'); f.classList.add('on'); requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('on'))); }
+
+async function takePhoto() {
+  if (!stream || !video.videoWidth) return;
+  const w = video.videoWidth, h = video.videoHeight;
+  canvas.width = w; canvas.height = h;
+  canvas.getContext('2d').drawImage(video, 0, 0, w, h);
+  flash();
+  if (navigator.vibrate) navigator.vibrate(30);
+  const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+  await upload(blob);
+}
+
+async function toJpeg(file) {
+  try {
+    const bmp = await createImageBitmap(file);
+    const max = 4096; let w = bmp.width, h = bmp.height;
+    const s = Math.min(1, max / Math.max(w, h)); w = Math.round(w * s); h = Math.round(h * s);
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(bmp, 0, 0, w, h);
+    if (bmp.close) bmp.close();
+    const out = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.9));
+    return out || file;
+  } catch { return file; }
+}
+
+async function upload(blob) {
+  setStatus('Saving…');
+  try {
+    const r = await fetch('/api/photos', { method: 'POST', headers: { 'Content-Type': blob.type || 'application/octet-stream' }, body: blob });
+    if (!r.ok) { let m = r.statusText; try { m = (await r.json()).error; } catch {} setStatus('Save failed: ' + m, true); return false; }
+    setStatus('Saved ✓'); setTimeout(() => { if ($('status').textContent === 'Saved ✓') setStatus(''); }, 1500);
+    await loadPhotos();
+    return true;
+  } catch (e) { setStatus('Save failed: ' + e.message, true); return false; }
+}
+
+async function handleFiles(files) {
+  for (const f of files) await upload(await toJpeg(f));
+}
+
+function fmtTime(t) { return new Date(t * 1000).toLocaleString(); }
+
+async function loadPhotos() {
+  let list = [];
+  try { list = await (await fetch('/api/photos')).json(); } catch {}
+  const grid = $('grid'); grid.innerHTML = '';
+  $('count').textContent = list.length ? `(${list.length})` : '';
+  if (!list.length) {
+    const d = document.createElement('div'); d.className = 'empty';
+    d.textContent = me.anonymous ? 'Photos appear here for bot participants.' : 'No photos yet — take one!';
+    grid.appendChild(d); return;
+  }
+  for (const p of list) {
+    const b = document.createElement('button');
+    const img = document.createElement('img');
+    img.loading = 'lazy'; img.src = '/photos/' + p.id; img.alt = 'Photo by ' + (p.author || 'someone');
+    b.appendChild(img); b.onclick = () => openLightbox(p);
+    grid.appendChild(b);
+  }
+}
+
+function fileName(p) { return 'photo-' + new Date(p.created_at * 1000).toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.' + p.ext; }
+
+async function openLightbox(p) {
+  current = p; currentBlob = null;
+  $('lbImg').src = '/photos/' + p.id;
+  $('lbMeta').textContent = (p.author || 'Unknown') + ' · ' + fmtTime(p.created_at) + ' · ' + (p.size >= 1048576 ? (p.size / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(p.size / 1024)) + ' KB');
+  $('lbDownload').href = '/photos/' + p.id; $('lbDownload').download = fileName(p);
+  $('lbDelete').hidden = !p.mine;
+  $('lightbox').hidden = false;
+  try { currentBlob = await (await fetch('/photos/' + p.id)).blob(); } catch {}
+}
+
+async function sharePhoto() {
+  if (!current) return;
+  try {
+    const blob = currentBlob || await (await fetch('/photos/' + current.id)).blob();
+    const f = new File([blob], fileName(current), { type: blob.type || current.content_type });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f] }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  $('lbDownload').click();
+}
+
+async function deletePhoto() {
+  if (!current || !confirm('Delete this photo?')) return;
+  const r = await fetch('/api/photos/' + current.id, { method: 'DELETE' });
+  if (r.ok) { $('lightbox').hidden = true; await loadPhotos(); } else setStatus('Delete failed', true);
+}
+
+$('startBtn').onclick = startCamera;
+$('shutter').onclick = takePhoto;
+$('flip').onclick = () => { facing = facing === 'environment' ? 'user' : 'environment'; startCamera(); };
+$('nativeInput').onchange = async e => { await handleFiles([...e.target.files]); e.target.value = ''; };
+$('libraryInput').onchange = async e => { await handleFiles([...e.target.files]); e.target.value = ''; };
+$('lbClose').onclick = () => { $('lightbox').hidden = true; };
+$('lbShare').onclick = sharePhoto;
+$('lbDelete').onclick = deletePhoto;
+document.addEventListener('visibilitychange', () => { if (document.hidden) stopCamera(); });
+
+(async () => {
+  await loadMe();
+  await loadPhotos();
+  if (!me.anonymous) startCamera();
+})();
+</script>
+</body>
+</html>
