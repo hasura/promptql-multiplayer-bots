@@ -117,7 +117,7 @@ Iterate over **every in-scope person**, using the completed table and frozen ont
 
 Produce **separate, clearly linked views**, using the same persisted research/decision dataset:
 
-1. **Standalone org-chart canvas**, titled exactly **“Probabilistic Org Chat with Jev”**. For a scope of up to 250, one huge zoomable/pannable canvas includes **every in-scope person**, not just leaders or 12 visible nodes. Offer fit-all, zoom, pan, reset, person search/focus and a complete export. Unresolved people remain visible in clearly marked lanes; do not add false edges. Publish the chart as its own artifact/page, linked from the table/profile explorer—not merely a small diagram inside that table. For an approved split, publish one full-cohort canvas per group, each with this title and a distinct group/scope subtitle, plus a group index; do not invent a combined reporting tree.
+1. **Standalone org-chart canvas**, titled exactly **“Probabilistic Org Chart with Jev”**. For a scope of up to 250, one huge zoomable/pannable canvas includes **every in-scope person**, not just leaders or 12 visible nodes. Offer fit-all, zoom, pan, reset, person search/focus and a complete export. Unresolved people remain visible in clearly marked lanes; do not add false edges. Publish the chart as its own artifact/page, linked from the table/profile explorer—not merely a small diagram inside that table. For an approved split, publish one full-cohort canvas per group, each with this title and a distinct group/scope subtitle, plus a group index; do not invent a combined reporting tree.
 2. **People summary chart/table**, searchable and filterable, with the required research fields plus probable department, function and manager; selected probabilities; separate confidence columns; evidence status and sources.
 3. **Profile summaries**, with current/past roles, company tenure, overall career and target-company summaries, citations and caveats.
 
@@ -139,3 +139,16 @@ Prefer app artifacts where a VM is available; otherwise provide a separate self-
 - At 250 people, verify 250 distinct person nodes on the unfiltered canvas/export, readable labels, literal title, confidence by each scored line, graph flags, mobile pan, links, filters and downloads.
 - Share the separate org-chart and people/profile deliverables with brief coverage, unresolved/weak-edge, exact-engine and freshness notes.
 - Never publish real rosters, emails, private company evidence or identity mappings to GitHub. Public examples must be fictional or explicitly approved; hidden artifacts are not access controls.
+
+## After handover: invite a correction pass
+
+After you share the deliverables, offer one multiplayer step. Ask whether someone who knows this company should check the chart, such as the account executive, a champion inside the company, or a teammate.
+
+- If the user names a person in this project, tag them. Ask them to correct reporting lines, titles or missing people, here in this chat.
+- Treat their corrections as user-provided evidence:
+  - record who gave each correction and when
+  - rerun the Jev decisions that the corrections affect
+  - update the canvas and the table
+  - label each corrected line `Corrected by <name>`
+- Never tag anyone the user did not name.
+- If the user works alone, they can skip this step. Ask only once.

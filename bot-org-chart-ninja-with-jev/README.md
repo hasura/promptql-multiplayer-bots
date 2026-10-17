@@ -1,6 +1,6 @@
 # Bot Org Chart Ninja with Jev
 
-Link to create new bot: **Pending publication**
+Link to create new bot: https://ql.app/l/2uagzSuM
 
 Turn a company name—and optionally a names/email list—into a sourced, probabilistic org chart. Research public LinkedIn profiles with Google or Exa X-Ray, use Jev to estimate departments, functions and direct managers, and explore the results through diagrams, a people summary chart and profile summaries.
 
@@ -12,10 +12,11 @@ Missing company? The bot helps you choose and asks permission. Missing list? No 
 
 ## What you get
 
-- A separate huge, zoomable full-roster canvas titled **Probabilistic Org Chat with Jev**, with reporting probability **and separate Jev confidence** at each scored person’s reporting line. Approved larger rosters get separate full-cohort canvases.
+- A separate huge, zoomable full-roster canvas titled **Probabilistic Org Chart with Jev**, with reporting probability **and separate Jev confidence** at each scored person’s reporting line. Approved larger rosters get separate full-cohort canvases.
 - Searchable/filterable people summary chart.
 - LinkedIn career and company-specific summaries, sources and uncertainty.
 - CSV/JSON downloads and complete org-canvas export.
+- An optional correction pass: tag the AE, a champion or a teammate who knows the company, and the bot folds their fixes into the chart.
 
 These are probabilistic research results, not verified reporting lines or a complete employee directory. Jev must be provisioned on the deployment; at least one working Google or Exa search route must be available. Missing dependencies are explained, never hidden.
 
@@ -49,6 +50,6 @@ The preview uses fictional names and synthetic percentages to show the visual id
 
 ## Publication
 
-Publication checklist: merge this folder, verify raw Markdown access, mint the Playground seed from PROMPT.md and replace the pending link here and in the root README. Keep the folder and BOT.md paths stable once public links exist.
+Published. New-bot link: https://ql.app/l/2uagzSuM. Keep the folder and BOT.md paths stable, because public links point at them.
 
 Diagram Design adaptation: Cathryn Lavery, MIT; reference revision and notice in the bundled guide and licenses/.
