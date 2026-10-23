@@ -1,0 +1,7 @@
+app/.venv/
+app/__pycache__/
+app/**/__pycache__/
+app/data/
+app/deck.py
+app/qa/
+tests/__pycache__/

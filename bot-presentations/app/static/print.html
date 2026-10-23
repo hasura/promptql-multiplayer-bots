@@ -1,0 +1,26 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Deck</title>
+<script src="static/render.js"></script>
+<script>document.write('<link rel="stylesheet" href="' + SlideKit.fontsHref() + '">')</script>
+<link rel="stylesheet" href="static/slide.css">
+<style>
+@page{size:1280px 720px;margin:0}
+html,body{margin:0;padding:0;background:#fff}
+.page{width:1280px;height:720px;overflow:hidden;break-after:page;page-break-after:always}
+.page:last-child{break-after:auto;page-break-after:auto}
+</style></head>
+<body><script>
+(async () => {
+  const doc = await (await fetch('api/deck')).json();
+  const deck = doc.deck;
+  for (const s of deck.slides) {
+    const p = document.createElement('div');
+    p.className = 'page';
+    p.appendChild(SlideKit.renderSlide(s, deck.theme));
+    document.body.appendChild(p);
+  }
+  await document.fonts.ready;
+  await Promise.all([...document.images].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })));
+  document.title = 'ready';
+})();
+</script></body></html>
