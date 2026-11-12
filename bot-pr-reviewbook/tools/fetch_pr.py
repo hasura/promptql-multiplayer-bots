@@ -10,14 +10,16 @@ review comments. Requests go through the requesting person's GitHub
 connection (`__github`) on PromptQL, so private repositories work. Set
 REVIEWBOOK_GITHUB=public to use unauthenticated public GitHub instead.
 
-When GitHub omits a file's diff (large files), the diff is computed from the
-two file versions with `git diff --no-index`, so no change is silently lost.
+Every fetched file is checked against its Git blob hash. When GitHub omits a
+file's diff (large files), the diff is computed from the two file versions
+with `git diff --no-index`, so no change is silently lost.
 Binary files are recorded with their sizes and blob hashes.
 
 Python standard library and git only.
 """
 import argparse
 import base64
+import hashlib
 import json
 import os
 import re
@@ -83,6 +85,9 @@ def content_at(repo, path, ref):
     if raw is None or (data.get("size", 0) > 0 and not raw):
         blob = api(f"repos/{repo}/git/blobs/{data['sha']}")
         raw = base64.b64decode(blob["content"])
+    computed = hashlib.sha1(b"blob %d\0" % len(raw) + raw).hexdigest()
+    if data.get("sha") and computed != data["sha"]:
+        raise SystemExit(f"{path} at {ref}: content does not match its Git blob hash")
     info = {"kind": "file", "sha": data.get("sha"), "size": data.get("size")}
     if b"\0" in raw[:8000]:
         info["binary"] = True

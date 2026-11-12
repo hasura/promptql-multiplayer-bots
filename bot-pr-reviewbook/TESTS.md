@@ -16,7 +16,7 @@ python3 tools/assemble.py --snapshot sample/snapshot.json --authored sample/auth
 2. Labels steps A.1, B.1… with groups and 1, 2… without.
 3. Fails when a line has no step, or more than one.
 4. Fails when a displayed line differs from the real file, or a changed file is missing.
-5. Requires an explanation for each code block and a note for each removed line of code.
+5. Requires an explanation for each block and a note for each removed line of code, test or configuration, but not documentation.
 6. Requires each step's problem-first `why`.
 7. Keeps generated lines in the review and refuses `verified` without command and evidence.
 8. Requires an entry for a binary change and reports it when not reviewed.
@@ -24,6 +24,7 @@ python3 tools/assemble.py --snapshot sample/snapshot.json --authored sample/auth
 10. Rejects diagrams that point at unknown steps or join missing boxes, and `serves` links to unknown steps.
 11. Rejects a step that shows no changes.
 12. Numbers diff lines correctly.
+13. Passes related pull request links through to the page.
 
 ## Manual
 

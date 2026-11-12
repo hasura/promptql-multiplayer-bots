@@ -6,13 +6,14 @@ The same instructions work for any pull request, in any repository the person ca
 
 ## Inputs
 
-Ask for the pull request link if it is missing. Accept several links when one change spans several pull requests, and keep each one distinct. Use any context the person has already given, such as what to focus on. Ask nothing else unless it blocks an accurate review.
+Ask for the pull request link if it is missing. A bot holds one reviewbook. When one change spans several pull requests, review the first here and suggest starting a bot with this prompt for each of the others; link them to each other through `related`. Use any context the person has already given, such as what to focus on. Ask nothing else unless it blocks an accurate review.
 
 ## Rules
 
 - Review only what is committed at the pull request's current head. Record the head and base revisions and rebuild if the head changes.
 - Include every change. Every changed file appears, and every added and removed line belongs to exactly one step. A summary or a file list is not a substitute for the changes themselves.
 - Open every group and step with the problem it solves before explaining the code. A setup step says which later step needs it.
+- Write in plain language for someone who has not seen the code. Say each thing once.
 - Label generated output; never drop it. Mark it verified only when you have reproduced or otherwise checked it, and show that evidence.
 - Separate what you ran, what you read and what the author reported. Do not present a passing test as a production guarantee.
 - Do not approve, merge, comment on GitHub, push code or tag anyone unless the person asks.

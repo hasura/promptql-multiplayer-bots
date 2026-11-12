@@ -66,7 +66,7 @@ Follow [BUILD_GUIDE.md](BUILD_GUIDE.md) and [CONTENT_FORMAT.md](CONTENT_FORMAT.m
 python3 /workspace/reviewbook-kit/bot-pr-reviewbook/tools/assemble.py --snapshot snapshot.json --authored authored.json --out content.json --report coverage.json
 ```
 
-It prints every problem and exits non-zero while any changed line is unassigned or assigned twice, any line number or text differs from GitHub, a file is missing, an explanation or removal note is absent, generated output is marked verified without evidence, or a diagram points at nothing. Fix `authored.json` and rerun. When it passes, store the content on this bot:
+It prints every problem and exits non-zero while any changed line is unassigned or assigned twice, any line number or text differs from GitHub, a file is missing, an explanation is absent, a removed line of code, test or configuration has no note saying why, generated output is marked verified without evidence, or a diagram points at nothing. Fix `authored.json` and rerun. When it passes, store the content on this bot:
 
 ```sh
 python3 /workspace/reviewbook-kit/bot-pr-reviewbook/tools/assemble.py --snapshot snapshot.json --authored authored.json --out content.json --upload
@@ -76,7 +76,7 @@ python3 /workspace/reviewbook-kit/bot-pr-reviewbook/tools/assemble.py --snapshot
 
 ### 3.6 Build the interface
 
-Copy the three files in `app/` into the bot's program files with the same names: `reviewbook.tsx`, `reviewbook.css` and `reviewbook_actions.py`, plus `reviewbook.run.json`. Run `reviewbook.run.json`. It builds the `reviewbook` artifact from `reviewbook.tsx` and `reviewbook.css`. The page loads `reviewbook_content` when it opens and runs `reviewbook_actions.py` to save comments, reviewed marks and the theme, and to send comments.
+Copy the four files in `app/` into the bot's program files with the same names: `reviewbook.tsx`, `reviewbook.css`, `reviewbook_actions.py` and `reviewbook.run.json`. Run `reviewbook.run.json`. It builds the `reviewbook` artifact from `reviewbook.tsx` and `reviewbook.css`. The page loads `reviewbook_content` when it opens and runs `reviewbook_actions.py` to save comments, reviewed marks and the theme, and to send comments.
 
 To refresh the content later, rerun 3.5; the page picks up the new content without rebuilding.
 
@@ -104,6 +104,7 @@ If the pull request gets new commits, fetch again and refresh the review. Commen
 
 ## 6. Limits
 
+- One reviewbook per bot. Review each pull request of a multi-repository change in its own bot and link them with `related`.
 - Reviews pull requests on GitHub only. GitHub's files API lists at most 3,000 files per pull request.
 - The page holds the full original and PR versions of every changed text file, so very large pull requests make a large page.
 - Several people can comment at once; each comment is saved separately. Reviewed marks and theme are shared by everyone using the bot.

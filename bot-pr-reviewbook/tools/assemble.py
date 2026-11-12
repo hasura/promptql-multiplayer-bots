@@ -34,6 +34,8 @@ HUNK = re.compile(r"@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 NODE_STATUSES = {"new", "changed", "removed", "same"}
 GENERATED_STATUSES = {"verified", "partly", "unverified"}
 NON_TEXT_KINDS = {"binary", "mode", "symlink", "submodule", "other"}
+# Removed lines in these kinds of file need a note saying why they were removed.
+REMOVAL_NOTE_KINDS = {"Code", "Test", "Configuration"}
 TRIVIAL_REMOVAL = re.compile(
     r"^\s*($|//|#|/\*|\*|--|<!--|[}\])]+[;,]?\s*$|import\s|from\s+\S+\s+import\s|export\s+\{)"
 )
@@ -377,7 +379,7 @@ def assemble(snapshot, authored, thread_id=None):
                     continue
                 block["notes"].append({"side": side, "start": start_n, "end": end_n, "after": max(r[side] for r in hit),
                                        "title": note["title"], "text": note["text"]})
-            if block_kind == "Code":
+            if block_kind in REMOVAL_NOTE_KINDS:
                 for r in owned:
                     if r["kind"] == "del" and not TRIVIAL_REMOVAL.match(r["text"]):
                         if not any(n["side"] == "old" and n["start"] <= r["old"] <= n["end"] for n in block["notes"]):
@@ -476,6 +478,7 @@ def assemble(snapshot, authored, thread_id=None):
             "state": "merged" if pr.get("merged") else pr.get("state", ""), "author": (pr.get("user") or {}).get("login"),
             "threadId": thread_id or authored.get("threadId") or "", "fetchedAt": snapshot.get("fetched_at"),
             "headline": authored.get("headline") or pr["title"], "dek": authored.get("dek", ""),
+            "related": [{"label": str(r.get("label", "")), "url": str(r.get("url", ""))} for r in authored.get("related") or [] if r.get("url")],
         },
         "purpose": {
             "heading": purpose.get("heading", ""), "summary": purpose.get("summary", []),

@@ -86,6 +86,27 @@ class AssembleTest(unittest.TestCase):
         _, _, problems = self.run_assemble(authored=authored)
         self.assertProblem(problems, "removed line 8")
 
+    def test_removed_test_line_needs_a_note(self):
+        snapshot = copy.deepcopy(self.snapshot)
+        f = next(x for x in snapshot["files"] if x["filename"] == "tests/test_upload.py")
+        f["status"] = "modified"
+        head = snapshot["head_source"]["tests/test_upload.py"]
+        snapshot["base_source"]["tests/test_upload.py"] = "assert old_behaviour()\n"
+        f["patch"] = "@@ -1 +1,17 @@\n-assert old_behaviour()\n" + "\n".join("+" + l for l in head.split("\n")[:-1])
+        f["deletions"] = 1
+        snapshot["files"] = [x for x in snapshot["files"]]
+        _, _, problems = self.run_assemble(snapshot=snapshot)
+        self.assertProblem(problems, "tests/test_upload.py: removed line 1")
+
+    def test_removed_documentation_line_needs_no_note(self):
+        snapshot = copy.deepcopy(self.snapshot)
+        f = next(x for x in snapshot["files"] if x["filename"] == "docs/limits.md")
+        snapshot["base_source"]["docs/size-limits.md"] = "# Limits\n\nNotes can be up to 1 MB of text.\nOld line.\n"
+        f["patch"] = f["patch"].replace("@@ -1,3 +1,6 @@", "@@ -1,4 +1,6 @@") + "\n-Old line."
+        f["deletions"] = 1
+        _, _, problems = self.run_assemble(snapshot=snapshot)
+        self.assertEqual([p for p in problems if "removed line" in p], [])
+
     def test_code_needs_an_explanation(self):
         authored = copy.deepcopy(self.authored)
         authored["explanations"] = [e for e in authored["explanations"] if e["file"] != "src/errors.py"]
@@ -151,6 +172,13 @@ class AssembleTest(unittest.TestCase):
         authored["steps"].append({"id": "empty", "group": "C", "title": "t", "why": "w", "checked": "c", "result": "r", "limits": "l"})
         _, _, problems = self.run_assemble(authored=authored)
         self.assertProblem(problems, "step 'empty' shows no changes")
+
+    def test_related_links_reach_the_content(self):
+        authored = copy.deepcopy(self.authored)
+        authored["related"] = [{"label": "Backend PR", "url": "https://github.com/acme/api/pull/7"}]
+        content, _, problems = self.run_assemble(authored=authored)
+        self.assertEqual(problems, [])
+        self.assertEqual(content["meta"]["related"], authored["related"])
 
     def test_parse_patch_numbers_lines(self):
         hunks = assemble.parse_patch("@@ -3,2 +3,3 @@\n a\n-b\n+c\n+d")

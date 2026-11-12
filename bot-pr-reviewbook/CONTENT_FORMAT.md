@@ -10,6 +10,7 @@ The bot writes one JSON file, `authored.json`. `tools/assemble.py` combines it w
 |---|---|---|
 | `headline` | no | Page title. A plain statement of what the PR achieves. Defaults to the PR title. |
 | `dek` | no | One or two sentences under the title. |
+| `related` | no | Links to related pull requests or their reviewbooks: `[{"label": "Backend PR", "url": "https://..."}]`. Shown under the title. |
 | `purpose` | yes | The opening section (below). |
 | `groups` | no | Groups of steps. Omit for a small PR; steps are then numbered 1, 2, 3. |
 | `steps` | yes | At least one step. |
@@ -63,7 +64,7 @@ Labels are A, B, C… in order unless `label` is given. `uses` lists groups this
 }
 ```
 
-`title`, `why`, `checked`, `result` and `limits` are required. Labels are `A.1`, `A.2`… within a group, or `1`, `2`… without groups. `finding` is optional; `draft`, `file` and `line` within it are optional.
+`title`, `why`, `checked`, `result` and `limits` are required. `label` overrides the automatic label. Labels are `A.1`, `A.2`… within a group, or `1`, `2`… without groups. `finding` is optional; `draft`, `file` and `line` within it are optional.
 
 ## ownership
 
@@ -93,7 +94,7 @@ One per step and file that the step owns:
 }
 ```
 
-Code blocks need an explanation. Every removed line of code, other than blank lines, comments, imports and closing brackets, needs an `old` note covering it. Notes must point at lines shown in that step's block.
+Every block needs an explanation except generated files, which show their verification instead. Every removed line in code, test and configuration files, other than blank lines, comments, imports and closing brackets, needs an `old` note covering it. Notes must point at lines shown in that step's block.
 
 ## generated
 
