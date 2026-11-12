@@ -1,0 +1,132 @@
+{
+ "headline": "Stop oversized attachments before they reach storage",
+ "dek": "Fictional sample review. acme/notes-service#42 does not exist; it shows how a reviewbook explains each change, its code and its evidence.",
+ "purpose": {
+  "heading": "Reject attachments over a size limit, and say why",
+  "summary": [
+   "Attachments are written to one shared storage volume. Large ones fill it and slow every request, and nothing stops a client from sending one.",
+   "This PR adds a configurable limit (10 MiB by default), rejects larger attachments before saving them, and documents the setting."
+  ],
+  "should": [
+   "Refuse an attachment larger than the limit, without writing it to storage.",
+   "Let operators change the limit with NOTES_MAX_UPLOAD_BYTES.",
+   "Tell clients how large an accepted attachment was."
+  ],
+  "shouldNot": [
+   "Change or delete attachments that are already stored.",
+   "Limit the size of note text."
+  ],
+  "quote": "This PR rejects attachments over a configurable limit (10 MiB by default) with HTTP 413 and documents the setting.",
+  "answered": [
+   {"q": "What happens to attachments already stored?", "a": "Nothing. The description says existing attachments are not changed."}
+  ],
+  "reviewerNotes": [
+   "The limit compares the size after the whole attachment has been received. A client can still send a very large body before being refused (see B.1)."
+  ],
+  "diagrams": [
+   {
+    "id": "upload-path",
+    "title": "The upload path, before and after",
+    "caption": "Green boxes are new, amber boxes changed. Each box links to the step that implements it.",
+    "nodes": [
+     {"id": "client", "label": "Client", "detail": "Sends an attachment", "status": "same", "col": 0, "row": 0},
+     {"id": "upload", "label": "upload()", "detail": "Entry point for attachments", "file": "src/upload.py", "step": "reject", "status": "changed", "col": 1, "row": 0},
+     {"id": "limit", "label": "Size limit", "detail": "settings.max_upload_bytes", "file": "src/config.py", "step": "setting", "status": "new", "col": 1, "row": 1},
+     {"id": "save", "label": "save()", "detail": "Writes to the storage volume", "file": "src/storage.py", "status": "same", "col": 2, "row": 0},
+     {"id": "toolarge", "label": "TooLarge", "detail": "Mapped to HTTP 413", "file": "src/errors.py", "step": "reject", "status": "new", "col": 2, "row": 1}
+    ],
+    "edges": [
+     {"id": "e1", "from": "client", "to": "upload", "label": "attachment", "status": "same"},
+     {"id": "e2", "from": "upload", "to": "limit", "label": "reads", "status": "new"},
+     {"id": "e3", "from": "upload", "to": "save", "label": "at or under limit", "status": "changed"},
+     {"id": "e4", "from": "upload", "to": "toolarge", "label": "over limit", "status": "new"}
+    ]
+   }
+  ]
+ },
+ "groups": [
+  {"id": "A", "title": "Choose the limit", "why": "Rejecting large attachments needs a limit that operators can change for their storage. Nothing defined one before, so B.1 has nothing to compare against."},
+  {"id": "B", "title": "Reject oversized attachments", "why": "Attachments of any size were saved, so one large upload could fill the shared volume. These steps refuse an attachment over A.1's limit before it is written, and report the accepted size.", "uses": ["A"]},
+  {"id": "C", "title": "Explain the limit", "why": "Operators and client developers need to know the limit exists, how to change it and what a rejection looks like.", "uses": ["B"]}
+ ],
+ "steps": [
+  {
+   "id": "setting", "group": "A", "serves": ["reject"],
+   "title": "Add a configurable upload limit",
+   "why": "B.1 needs a number to compare each attachment against, and different deployments have different storage sizes. This adds max_upload_bytes to the settings, read from NOTES_MAX_UPLOAD_BYTES with a 10 MiB default.",
+   "checked": "Read the setting and its default. The tests override it to small values.",
+   "result": "Inspected: default is 10 × 1024 × 1024 bytes.",
+   "limits": "A non-numeric NOTES_MAX_UPLOAD_BYTES stops the service at start-up with a ValueError; this PR does not report that more clearly."
+  },
+  {
+   "id": "reject", "group": "B",
+   "title": "Refuse an attachment over the limit before saving it",
+   "why": "upload() passed every attachment straight to save(), so nothing prevented a very large file from reaching storage. It now compares the size with A.1's limit and raises TooLarge before save() runs. The API turns TooLarge into HTTP 413.",
+   "checked": "Ran both tests: an attachment one byte over the limit raises TooLarge; one exactly at the limit is saved.",
+   "result": "Passed in this fictional sample.",
+   "limits": "The whole attachment is received before it is measured, so this protects storage but not memory or bandwidth.",
+   "finding": {
+    "kind": "Suggested improvement · not blocking",
+    "title": "Check the declared size before reading the body",
+    "body": "Refusing early, from the request's Content-Length, would avoid receiving a large body only to reject it.",
+    "draft": "Could the API also reject a request whose Content-Length exceeds the limit, before reading the body?",
+    "file": "src/upload.py", "line": 9
+   }
+  },
+  {
+   "id": "result-size", "group": "B",
+   "title": "Report the accepted size",
+   "why": "Clients had no way to confirm how much of an attachment was stored. upload() now returns the size with the path, and the generated API types gain the matching field.",
+   "checked": "The at-limit test reads the returned size. The generated types were regenerated and compared.",
+   "result": "Passed in this fictional sample.",
+   "limits": "Clients that check the response shape strictly must accept the new field."
+  },
+  {
+   "id": "docs", "group": "C",
+   "title": "Document the limit",
+   "why": "Without documentation, operators would not know the limit can be changed and clients would not recognise a 413. The limits page is renamed to cover more than note size and gains the new setting.",
+   "checked": "Read the page against the code: the variable name, default and status code match.",
+   "result": "Inspected.",
+   "limits": "The screenshot is binary and was not inspected."
+  }
+ ],
+ "ownership": [
+  {"file": "src/config.py", "step": "setting"},
+  {"file": "src/upload.py", "step": "reject"},
+  {"file": "src/upload.py", "step": "result-size", "new": [[12, 12]], "old": [[8, 8]]},
+  {"file": "src/errors.py", "step": "reject"},
+  {"file": "tests/test_upload.py", "step": "reject"},
+  {"file": "tests/test_upload.py", "step": "result-size", "new": [[14, 17]]},
+  {"file": "src/generated/api_types.py", "step": "result-size"},
+  {"file": "docs/limits.md", "step": "docs"}
+ ],
+ "explanations": [
+  {"step": "setting", "file": "src/config.py", "explanation": "Settings gains max_upload_bytes. It reads NOTES_MAX_UPLOAD_BYTES as an integer and falls back to 10 MiB.",
+   "notes": [{"side": "new", "start": 6, "end": 6, "title": "Read once, at start-up", "text": "The value is read when the module loads, so changing the variable needs a restart. int() fails loudly on a non-numeric value rather than silently using the default."}]},
+  {"step": "reject", "file": "src/upload.py", "explanation": "Before calling save(), upload() measures the attachment and raises TooLarge if it is larger than the configured limit.",
+   "notes": [{"side": "new", "start": 8, "end": 10, "title": "Compare, then refuse before saving", "text": "Strictly greater than: an attachment exactly at the limit is accepted. Raising here means save() never runs, so nothing is written for a rejected attachment."}]},
+  {"step": "reject", "file": "src/errors.py", "explanation": "A dedicated error type, so the API can map an oversized attachment to HTTP 413 instead of a generic 400 or 500."},
+  {"step": "reject", "file": "tests/test_upload.py", "explanation": "Sets the limit to 4 bytes and sends 5, expecting TooLarge."},
+  {"step": "result-size", "file": "src/upload.py", "explanation": "The success response now includes the number of bytes accepted.",
+   "notes": [{"side": "old", "start": 8, "end": 8, "title": "Why replace the old return?", "text": "The old response held only the path. The replacement keeps the path and adds the size, so existing clients still find the field they use."}]},
+  {"step": "result-size", "file": "tests/test_upload.py", "explanation": "Sets the limit to exactly the attachment size and checks it is saved and its size reported."},
+  {"step": "result-size", "file": "src/generated/api_types.py", "explanation": "The API response type gains bytes, regenerated from the API description."},
+  {"step": "docs", "file": "docs/limits.md", "explanation": "Adds the attachment limit, how to change it and the status code for rejections."}
+ ],
+ "generated": [
+  {"file": "src/generated/api_types.py", "status": "verified",
+   "source": "The file header reads: Code generated by api-gen from openapi.yaml. DO NOT EDIT.",
+   "generator": "api-gen", "command": "api-gen openapi.yaml -o src/generated/api_types.py",
+   "evidence": "Fictional sample: regenerating at the PR head produced identical output, and openapi.yaml adds the same bytes field."}
+ ],
+ "nonText": [
+  {"file": "docs/images/upload-limit.png", "kind": "binary", "step": "docs", "summary": "Adds a screenshot of the error shown for an oversized attachment.", "reviewed": false}
+ ],
+ "result": {
+  "headline": "No blocking problem found in this sample.",
+  "body": ["The limit is enforced before storage and both edges of it are tested. B.1 suggests also refusing early from the declared size."],
+  "evidence": [{"value": "2 / 2", "label": "tests passed (fictional)"}, {"value": "1 verified", "label": "generated file regenerated and compared"}, {"value": "1 not reviewed", "label": "binary screenshot"}],
+  "limits": "This is a fictional example. Nothing here was run against a real repository."
+ },
+ "verification": {"summary": ["Fictional sample data. A real reviewbook lists the commands it ran, the revision tested and the raw output."], "logs": [{"title": "pytest · 2 passed (fictional)", "text": "tests/test_upload.py ..                                    [100%]\n2 passed"}]}
+}

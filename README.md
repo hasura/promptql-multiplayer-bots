@@ -18,6 +18,7 @@ Each bot below has a link that opens a new bot with its prompt ready to send. Op
 | [Bot Factory](bot-factory/) | A Play Store for a room's bots, pinned as the room's Room TV: every bot gets a card with a 3D robot, and anyone can get their own copy in one click. Ships with five seed bots. | [Prompt](bot-factory/PROMPT.md) (launch link pending) |
 | [Superset Installer Bot](bot-superset-installer/) | Connects an existing Superset instance, proposes BI wiki context, creates a refresh-token query helper, and verifies dashboard access. | [Create bot](https://ql.app/l/BHwnFefK) |
 | [Presentations](bot-presentations/) | Creates an editable slide deck in a shared PowerPoint-style editor with fixed layouts, themes, notes and PPTX/PDF downloads. | [Prompt](bot-presentations/PROMPT.md) (launch link pending) |
+| [PR Reviewbook](bot-pr-reviewbook/) | Turns any GitHub pull request into an interactive reviewbook: every change in understanding order, why each exists, the exact code, diagrams and test evidence, with comments on any line sent back to the bot. | [Prompt](bot-pr-reviewbook/PROMPT.md) (launch link pending) |
 
 ## What is in each bot directory
 
