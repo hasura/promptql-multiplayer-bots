@@ -233,7 +233,7 @@ def assemble(snapshot, authored, thread_id=None):
         file_url = f"https://github.com/{repo}/blob/{head}/{path}" if status != "removed" else f"https://github.com/{repo}/blob/{base}/{f.get('previous_filename') or path}"
         patch = f.get("patch")
         nt_entries = match_entry(non_text, path)
-        textual = patch is not None and not f.get("binary")
+        textual = patch is not None and not f.get("binary") and not f.get("non_text")
         if not textual:
             if len(nt_entries) != 1:
                 problems.append(f"{path}: has no text diff, so exactly one nonText entry must describe and own it")

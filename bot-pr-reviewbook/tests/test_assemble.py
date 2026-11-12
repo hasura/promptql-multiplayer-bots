@@ -138,6 +138,18 @@ class AssembleTest(unittest.TestCase):
         _, _, problems = self.run_assemble(authored=authored)
         self.assertProblem(problems, "docs/images/upload-limit.png: has no text diff")
 
+    def test_mode_only_change_is_non_text(self):
+        snapshot = copy.deepcopy(self.snapshot)
+        snapshot["files"].append({"filename": "tools/run.sh", "status": "changed", "additions": 0, "deletions": 0, "changes": 0, "non_text": "mode"})
+        snapshot["pr"]["changed_files"] += 1
+        _, _, problems = self.run_assemble(snapshot=snapshot)
+        self.assertProblem(problems, "tools/run.sh: has no text diff")
+        authored = copy.deepcopy(self.authored)
+        authored["nonText"].append({"file": "tools/run.sh", "kind": "mode", "step": "docs", "summary": "Made executable.", "reviewed": True, "evidence": "Mode 100644 to 100755."})
+        content, _, problems = self.run_assemble(snapshot=snapshot, authored=authored)
+        self.assertEqual(problems, [])
+        self.assertEqual(content["coverage"]["files"], 8)
+
     def test_unreviewed_binary_is_reported(self):
         content, _, _ = self.run_assemble()
         self.assertEqual(content["coverage"]["notReviewed"], ["docs/images/upload-limit.png"])

@@ -19,7 +19,7 @@ python3 tools/assemble.py --snapshot sample/snapshot.json --authored sample/auth
 5. Requires an explanation for each block and a note for each removed line of code, test or configuration, but not documentation.
 6. Requires each step's problem-first `why`.
 7. Keeps generated lines in the review and refuses `verified` without command and evidence.
-8. Requires an entry for a binary change and reports it when not reviewed.
+8. Requires an entry for a binary or mode-only change and reports it when not reviewed.
 9. Reads a renamed file's original under its old path.
 10. Rejects diagrams that point at unknown steps or join missing boxes, and `serves` links to unknown steps.
 11. Rejects a step that shows no changes.

@@ -76,7 +76,7 @@ python3 /workspace/reviewbook-kit/bot-pr-reviewbook/tools/assemble.py --snapshot
 
 ### 3.6 Build the interface
 
-Copy the four files in `app/` into the bot's program files with the same names: `reviewbook.tsx`, `reviewbook.css`, `reviewbook_actions.py` and `reviewbook.run.json`. Run `reviewbook.run.json`. It builds the `reviewbook` artifact from `reviewbook.tsx` and `reviewbook.css`. The page loads `reviewbook_content` when it opens and runs `reviewbook_actions.py` to save comments, reviewed marks and the theme, and to send comments.
+The interface is built in the bot's program runtime, not on the VM. Read each of the four files in `app/` from the checkout and write it, unchanged and with the same name, to the bot's program files: `reviewbook.tsx`, `reviewbook.css`, `reviewbook_actions.py` and `reviewbook.run.json`. Then run `reviewbook.run.json`. It builds the `reviewbook` artifact from `reviewbook.tsx` and `reviewbook.css`. The page loads `reviewbook_content` when it opens and runs `reviewbook_actions.py` to save comments, reviewed marks and the theme, and to send comments.
 
 To refresh the content later, rerun 3.5; the page picks up the new content without rebuilding.
 

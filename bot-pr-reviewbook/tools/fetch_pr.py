@@ -147,6 +147,10 @@ def main():
             describe = lambda i: None if not i else f"{i.get('kind')}" + (f", {i['size']} bytes" if i.get("size") is not None else "") + (f", blob {i['sha'][:12]}" if i.get("sha") else "") + (f", target {i['target']}" if i.get("target") else "")
             binary[path] = {"base": describe(old_info), "head": describe(new_info)}
             continue
+        if f.get("patch") is None and not f.get("additions") and not f.get("deletions") and status == "changed":
+            f["non_text"] = "mode"
+            binary[path] = {"base": "file mode or metadata before the change", "head": "file mode or metadata after the change"}
+            continue
         if f.get("patch") is None and (f.get("additions") or f.get("deletions") or status in ("added", "removed")):
             f["patch"] = computed_patch(old_text, new_text)
             f["patch_source"] = "computed"
