@@ -1,7 +1,7 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>Deck</title>
 <script src="static/render.js"></script>
-<script>document.write('<link rel="stylesheet" href="' + SlideKit.fontsHref() + '">')</script>
+<script>SlideKit.fontsHrefs().forEach(function (u) { document.write('<link rel="stylesheet" href="' + u + '">'); })</script>
 <link rel="stylesheet" href="static/slide.css">
 <style>
 @page{size:1280px 720px;margin:0}

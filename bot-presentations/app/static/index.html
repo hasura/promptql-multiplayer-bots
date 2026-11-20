@@ -6,7 +6,7 @@
 <title>Slides</title>
 <script>try{document.documentElement.dataset.ui=localStorage.getItem('pql-slides-ui')||'light'}catch(e){}</script>
 <script src="static/render.js"></script>
-<script>document.write('<link rel="stylesheet" href="'+SlideKit.fontsHref()+'">')</script>
+<script>SlideKit.fontsHrefs().forEach(function(u){document.write('<link rel="stylesheet" href="'+u+'">')})</script>
 <link rel="stylesheet" href="static/slide.css">
 <link rel="stylesheet" href="static/editor.css">
 </head>

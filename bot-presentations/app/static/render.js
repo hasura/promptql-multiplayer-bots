@@ -14,11 +14,16 @@
     'JetBrains Mono': 'JetBrains+Mono:wght@300..800',
     'IBM Plex Mono': 'IBM+Plex+Mono:wght@300;400;500;600;700',
   };
+  // Fonts that are not on Google Fonts, loaded from Fontshare (its CSS API sends Access-Control-Allow-Origin: *).
+  const FONTSHARE = {
+    'Erode': 'erode@1,2',  // variable 300-700, upright and italic: the promptql.io headline face
+  };
   const TOKENS = ['bg', 'surface', 'subtle', 'text', 'muted', 'accent', 'accent2', 'highlight', 'onAccent'];
   const TOKEN_LABELS = {
     bg: 'Background', surface: 'Surface', subtle: 'Subtle', text: 'Text', muted: 'Muted text',
     accent: 'Accent', accent2: 'Accent 2', highlight: 'Highlight', onAccent: 'Text on accent',
   };
+  const FONT_NAMES = Object.keys(FONTS).concat(Object.keys(FONTSHARE));
   const PRESETS = [
     { name: 'sand', label: 'Sand & Teal', bg: '#F6F1E7', surface: '#FFFDF8', subtle: '#E6DCC8', text: '#1F2A2A', muted: '#66756F',
       accent: '#0F766E', accent2: '#5EC4B6', highlight: '#C6F432', onAccent: '#FFFDF8',
@@ -35,10 +40,16 @@
     { name: 'grape', label: 'Grape', bg: '#F4F2FB', surface: '#FFFFFF', subtle: '#E1DCF2', text: '#1E1A33', muted: '#6C6787',
       accent: '#5B3FD1', accent2: '#A99BF0', highlight: '#7CF0C5', onAccent: '#FFFFFF',
       headingFont: 'Sora', bodyFont: 'Outfit', monoFont: 'JetBrains Mono' },
+    { name: 'promptql', label: 'PromptQL Light', bg: '#FFFFFF', surface: '#F0F4F2', subtle: '#DADCE1', text: '#1F212B', muted: '#374151',
+      accent: '#1F212B', accent2: '#D7FB98', highlight: '#B6FC34', onAccent: '#FFFFFF',
+      headingFont: 'Erode', bodyFont: 'Inter', monoFont: 'JetBrains Mono' },
   ];
 
   function fontsHref() {
     return 'https://fonts.googleapis.com/css2?' + Object.values(FONTS).map(f => 'family=' + f).join('&') + '&display=swap';
+  }
+  function fontsHrefs() {
+    return [fontsHref(), 'https://api.fontshare.com/v2/css?' + Object.values(FONTSHARE).map(f => 'f[]=' + f).join('&') + '&display=swap'];
   }
   function color(theme, v) {
     if (!v || v === 'none') return 'transparent';
@@ -55,7 +66,7 @@
     const n = name || 'Inter';
     let fb = 'system-ui, sans-serif';
     if (f === 'mono' || /mono/i.test(n)) fb = 'ui-monospace, monospace';
-    else if (/fraunces|playfair|lora|serif/i.test(n) && !/sans/i.test(n)) fb = 'Georgia, serif';
+    else if (/fraunces|playfair|lora|erode|serif/i.test(n) && !/sans/i.test(n)) fb = 'Georgia, serif';
     return `"${n}", ${fb}`;
   }
 
@@ -102,5 +113,5 @@
     return n;
   }
 
-  window.SlideKit = { FONTS, FONT_NAMES: Object.keys(FONTS), TOKENS, TOKEN_LABELS, PRESETS, fontsHref, color, toHex, family, renderEl, renderSlide };
+  window.SlideKit = { FONTS, FONTSHARE, FONT_NAMES, TOKENS, TOKEN_LABELS, PRESETS, fontsHref, fontsHrefs, color, toHex, family, renderEl, renderSlide };
 })();

@@ -25,6 +25,10 @@ PRESETS = {
     'grape': {'name': 'grape', 'label': 'Grape', 'bg': '#F4F2FB', 'surface': '#FFFFFF', 'subtle': '#E1DCF2',
               'text': '#1E1A33', 'muted': '#6C6787', 'accent': '#5B3FD1', 'accent2': '#A99BF0', 'highlight': '#7CF0C5',
               'onAccent': '#FFFFFF', 'headingFont': 'Sora', 'bodyFont': 'Outfit', 'monoFont': 'JetBrains Mono'},
+    # The promptql.io landing-page look: white canvas, charcoal ink and accent, quiet #F0F4F2 cards, lime highlight and lime-hover secondary.
+    'promptql': {'name': 'promptql', 'label': 'PromptQL Light', 'bg': '#FFFFFF', 'surface': '#F0F4F2', 'subtle': '#DADCE1',
+                 'text': '#1F212B', 'muted': '#374151', 'accent': '#1F212B', 'accent2': '#D7FB98', 'highlight': '#B6FC34',
+                 'onAccent': '#FFFFFF', 'headingFont': 'Erode', 'bodyFont': 'Inter', 'monoFont': 'JetBrains Mono'},
 }
 
 
