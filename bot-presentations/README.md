@@ -14,7 +14,7 @@ A v2 VM with systemd, Chrome and uv is required. Creating a deck, editing it and
 
 1. A slide editor that runs in the browser: thumbnail rail with a right-click menu (new slide in 5 layouts, duplicate, move, delete), a 1280x720 canvas where every text box, shape and image is a movable, resizable layer, a Design / Format / Layers panel, speaker notes, present mode, autosave with conflict handling, and undo.
 
-2. Themes: 5 presets (Sand & Teal, Midnight, Paper, Coral, Grape) plus user-saved themes shared by everyone using that editor. Colours are theme tokens, so a theme change restyles the whole deck.
+2. Themes: 6 presets (Sand & Teal, Midnight, Paper, Coral, Grape, PromptQL Light) plus user-saved themes shared by everyone using that editor. Colours are theme tokens, so a theme change restyles the whole deck.
 
 3. Exports: editable .pptx (one native shape per layer, with notes), PDF, and the raw deck JSON. "Send to your account" copies the deck into the visitor's own Google Slides (through `__google-drive-v2`) or PowerPoint on OneDrive (through `__microsoft-powerpoint`), using the visitor's credentials.
 
@@ -61,7 +61,7 @@ If the checkout path exists, use a new path rather than overwriting work. Record
 
 ### 3.4 Write deck.py
 
-Copy `deck_example.py` to `deck.py`, then replace the content following section 4 (content rules) and section 5 (layouts). Keep the imports and the final `build_deck(...)` call. The theme argument is `'sand'` unless the user asks for another preset (`midnight`, `paper`, `coral`, `grape`).
+Copy `deck_example.py` to `deck.py`, then replace the content following section 4 (content rules) and section 5 (layouts). Keep the imports and the final `build_deck(...)` call. The theme argument is `'sand'` unless the user asks for another preset (`midnight`, `paper`, `coral`, `grape`, `promptql`). `promptql` (PromptQL Light) matches the promptql.io landing page: white canvas, charcoal ink, quiet off-white cards, lime highlights, Erode headings (loaded from Fontshare), Inter body and JetBrains Mono.
 
 ### 3.5 Build, install, check
 

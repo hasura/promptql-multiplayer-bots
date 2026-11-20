@@ -67,7 +67,7 @@ class KitTests(unittest.TestCase):
         self.assertTrue(all(s['notes'] for s in slides))
         ids = [e['id'] for s in slides for e in s['elements']]
         self.assertEqual(len(ids), len(set(ids)))
-        self.assertEqual(len(layouts.PRESETS), 5)
+        self.assertEqual(len(layouts.PRESETS), 6)
         self.assertEqual(self.seed['theme']['name'], 'sand')
         for s in slides:
             for e in s['elements']:
